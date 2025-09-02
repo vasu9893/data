@@ -1,0 +1,1298 @@
+import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'dart:async'; // Added for Timer
+
+void main() {
+  runApp(const MainApp());
+}
+
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
+
+  static const String defaultUrl =
+      'https://bharatwinn.site/#/register?invitationCode=7729082258040';
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: SafeArea(child: _WebViewScreen(initialUrl: defaultUrl)),
+      ),
+    );
+  }
+}
+
+class _WebViewScreen extends StatefulWidget {
+  const _WebViewScreen({required this.initialUrl});
+
+  final String initialUrl;
+
+  @override
+  State<_WebViewScreen> createState() => _WebViewScreenState();
+}
+
+class _WebViewScreenState extends State<_WebViewScreen> {
+  late final WebViewController _controller;
+  Timer? _stuckDetectionTimer;
+  bool _isPageStuck = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            print('🔄 Page loading started: $url');
+            _resetStuckDetectionTimer();
+            _isPageStuck = false;
+          },
+          onPageFinished: (String url) {
+            print('✅ Page loading finished: $url');
+            _injectReplacementScript();
+            _resetStuckDetectionTimer();
+          },
+          onWebResourceError: (WebResourceError error) {
+            print('❌ Web resource error: ${error.description}');
+            _handleWebViewError();
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.initialUrl));
+
+    // Start stuck detection timer
+    _startStuckDetectionTimer();
+  }
+
+  void _resetStuckDetectionTimer() {
+    _stuckDetectionTimer?.cancel();
+    _startStuckDetectionTimer();
+  }
+
+  void _startStuckDetectionTimer() {
+    _stuckDetectionTimer = Timer(const Duration(seconds: 45), () {
+      if (mounted && !_isPageStuck) {
+        print('⚠️ Stuck detection timer triggered - page may be stuck');
+        _handleStuckPage();
+      }
+    });
+  }
+
+  void _handleStuckPage() {
+    if (_isPageStuck) {
+      print('🔄 Page is confirmed stuck, attempting full recovery...');
+      _recoverFromStuckState();
+    } else {
+      _isPageStuck = true;
+      print('⚠️ First stuck detection - attempting gentle recovery...');
+
+      // Try to inject emergency stop script first
+      _controller.runJavaScript('''
+        if (window.emergencyStop) {
+          window.emergencyStop();
+        }
+        console.log('🛑 Emergency stop triggered from Flutter');
+      ''');
+
+      // Wait a bit then try to refresh
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          print('🔄 Attempting page refresh...');
+          _controller.reload();
+        }
+      });
+    }
+  }
+
+  void _recoverFromStuckState() {
+    print('🔄 Attempting full recovery...');
+    _isPageStuck = false;
+
+    // Clear any existing timers
+    _stuckDetectionTimer?.cancel();
+
+    // Try JavaScript recovery first with multiple strategies
+    _controller.runJavaScript('''
+      console.log('🔄 Flutter recovery triggered');
+      
+      // Strategy 1: Try reset page state
+      if (window.resetPageState) {
+        console.log('🔄 Using resetPageState...');
+        window.resetPageState();
+      } 
+      // Strategy 2: Try emergency stop
+      else if (window.emergencyStop) {
+        console.log('🔄 Using emergencyStop...');
+        window.emergencyStop();
+      }
+      // Strategy 3: Force refresh
+      else if (window.forceRefresh) {
+        console.log('🔄 Using forceRefresh...');
+        window.forceRefresh();
+      }
+      // Strategy 4: Force reset (nuclear option)
+      else if (window.forceReset) {
+        console.log('🔄 Using forceReset...');
+        window.forceReset();
+      }
+      // Strategy 5: Manual DOM manipulation
+      else {
+        console.log('🔄 Manual DOM recovery...');
+        // Clear any stuck state
+        if (window.isRunning !== undefined) window.isRunning = false;
+        if (window.isInitialized !== undefined) window.isInitialized = false;
+        if (window.retryCount !== undefined) window.retryCount = 0;
+        
+        // Force a fresh start
+        setTimeout(() => {
+          if (window.replaceValues) {
+            window.replaceValues();
+          }
+        }, 1000);
+      }
+    ''');
+
+    // Wait a bit then reload if needed
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        print('🔄 Reloading page for complete recovery...');
+        _controller.loadRequest(Uri.parse(widget.initialUrl));
+      }
+    });
+
+    // Restart stuck detection timer
+    _startStuckDetectionTimer();
+  }
+
+  void _handleWebViewError() {
+    print('🔄 Handling WebView error...');
+    _isPageStuck = false;
+    _resetStuckDetectionTimer();
+  }
+
+  @override
+  void dispose() {
+    _stuckDetectionTimer?.cancel();
+    super.dispose();
+  }
+
+  void _injectReplacementScript() {
+    const script = r'''
+      (function() {
+        'use strict';
+        
+        // Global state management
+        let isInitialized = false;
+        let lastDate = '';
+        let retryCount = 0;
+        let maxRetries = 5;
+        let isRunning = false;
+        let currentPage = '';
+        let isTeamReportPage = false;
+        let lastProcessedUrl = '';
+        let processingTimeout = null;
+        
+        // Enhanced value mappings with fallbacks
+        const valueMappings = {
+          // Direct subordinates
+          'direct': {
+            'number of register': '52',
+            'Deposit number': '52',
+            'Deposit amount': '26632',
+            'Number of people making first deposit': '13'
+          },
+          // Team subordinates
+          'team': {
+            'number of register': '2',
+            'Deposit number': '1',
+            'Deposit amount': '2100',
+            'Number of people making first deposit': '1'
+          },
+          // Promotion data
+          'promotion': {
+            'This Week': '251.58',
+            'Total commission': '11464.89',
+            'direct subordinate': '2465',
+            'Total number of subordinates in the team': '145'
+          },
+          // Team Report dates
+          'dates': {
+            '2025-09-01': {
+              'Deposit number': '72',
+              'Deposit amount': '52100',
+              'Number of bettors': '88',
+              'Total bet': '225000',
+              'Number of people making first deposit': '32',
+              'First deposit amount': '31200'
+            },
+            '2025-08-31': {
+              'Deposit number': '68',
+              'Deposit amount': '47890',
+              'Number of bettors': '85',
+              'Total bet': '210000',
+              'Number of people making first deposit': '30',
+              'First deposit amount': '28900'
+            },
+            '2025-08-30': {
+              'Deposit number': '65',
+              'Deposit amount': '45678',
+              'Number of bettors': '82',
+              'Total bet': '198765',
+              'Number of people making first deposit': '28',
+              'First deposit amount': '25678'
+            },
+            '2025-08-29': {
+              'Deposit number': '61',
+              'Deposit amount': '33026',
+              'Number of bettors': '80',
+              'Total bet': '150217',
+              'Number of people making first deposit': '16',
+              'First deposit amount': '13455'
+            },
+            '2025-08-28': {
+              'Deposit number': '62',
+              'Deposit amount': '34124',
+              'Number of bettors': '75',
+              'Total bet': '163823',
+              'Number of people making first deposit': '19',
+              'First deposit amount': '14524'
+            },
+            '2025-08-27': {
+              'Deposit number': '70',
+              'Deposit amount': '40585',
+              'Number of bettors': '76',
+              'Total bet': '245767',
+              'Number of people making first deposit': '19',
+              'First deposit amount': '21119'
+            },
+            '2025-08-26': {
+              'Deposit number': '61',
+              'Deposit amount': '44363',
+              'Number of bettors': '74',
+              'Total bet': '187832',
+              'Number of people making first deposit': '26',
+              'First deposit amount': '23885'
+            },
+            '2025-08-25': {
+              'Deposit number': '70',
+              'Deposit amount': '43468',
+              'Number of bettors': '80',
+              'Total bet': '191321',
+              'Number of people making first deposit': '33',
+              'First deposit amount': '18347'
+            },
+            '2025-08-24': {
+              'Deposit number': '66',
+              'Deposit amount': '30045',
+              'Number of bettors': '81',
+              'Total bet': '191924',
+              'Number of people making first deposit': '29',
+              'First deposit amount': '14402'
+            },
+            '2025-08-23': {
+              'Deposit number': '63',
+              'Deposit amount': '40824',
+              'Number of bettors': '78',
+              'Total bet': '256046',
+              'Number of people making first deposit': '29',
+              'First deposit amount': '20954'
+            },
+            '2025-08-22': {
+              'Deposit number': '51',
+              'Deposit amount': '23934',
+              'Number of bettors': '62',
+              'Total bet': '132607',
+              'Number of people making first deposit': '15',
+              'First deposit amount': '11774'
+            },
+            '2025-08-21': {
+              'Deposit number': '51',
+              'Deposit amount': '22181',
+              'Number of bettors': '62',
+              'Total bet': '124103',
+              'Number of people making first deposit': '14',
+              'First deposit amount': '9241'
+            },
+            '2025-08-20': {
+              'Deposit number': '52',
+              'Deposit amount': '26632',
+              'Number of bettors': '72',
+              'Total bet': '129343',
+              'Number of people making first deposit': '13',
+              'First deposit amount': '11636'
+            }
+          }
+        };
+        
+        // Page detection function
+        function detectCurrentPage() {
+          const url = window.location.href;
+          const body = document.body;
+          
+          // Detect Team Report page
+          if (url.includes('/#/promotion/TeamReport') || 
+              url.includes('TeamReport') ||
+              body.querySelector('.header-container')) {
+            currentPage = 'TeamReport';
+            isTeamReportPage = true;
+            console.log('📍 Detected Team Report page');
+            
+            // Start date watcher for TeamReport page
+            setTimeout(() => {
+              startDateWatcher();
+            }, 1000);
+          }
+          // Detect Promotion page (with new HTML structure)
+          else if (url.includes('/#/promotion') || 
+                   url.includes('promotion') ||
+                   body.querySelector('.info_content') ||
+                   body.querySelector('.info') && body.querySelector('.head')) {
+            currentPage = 'Promotion';
+            isTeamReportPage = false;
+            console.log('📍 Detected Promotion page');
+          }
+          // Detect Subordinate Data page
+          else if (url.includes('/#/promotion/SubordinateData') || 
+                   url.includes('SubordinateData') ||
+                   body.querySelector('.info') && !body.querySelector('.header-container')) {
+            currentPage = 'SubordinateData';
+            isTeamReportPage = false;
+            console.log('📍 Detected Subordinate Data page');
+          }
+          // Detect other pages
+          else {
+            currentPage = 'Other';
+            isTeamReportPage = false;
+            console.log('📍 Detected other page:', url);
+          }
+          
+          return currentPage;
+        }
+        
+        // Utility functions
+        function safeQuerySelector(selector, parent = document) {
+          try {
+            return parent.querySelector(selector);
+          } catch (e) {
+            return null;
+          }
+        }
+        
+        function safeQuerySelectorAll(selector, parent = document) {
+          try {
+            return parent.querySelectorAll(selector);
+          } catch (e) {
+            return [];
+          }
+        }
+        
+        function safeTextContent(element) {
+          try {
+            return element && element.textContent ? element.textContent.trim() : '';
+          } catch (e) {
+            return '';
+          }
+        }
+        
+        // Core replacement function with timeout protection
+        function replaceValues() {
+          // Prevent overlapping executions
+          if (isRunning) {
+            console.log('⚠️ Already running, skipping...');
+            return;
+          }
+          
+          // Clear any existing timeout
+          if (processingTimeout) {
+            clearTimeout(processingTimeout);
+            processingTimeout = null;
+          }
+          
+          // Set processing timeout to prevent getting stuck
+          processingTimeout = setTimeout(() => {
+            console.log('⚠️ Processing timeout reached, resetting state');
+            isRunning = false;
+            isInitialized = false;
+            // Force a fresh start
+            setTimeout(() => {
+              if (!isRunning) {
+                console.log('🔄 Attempting fresh start after timeout');
+                replaceValues();
+              }
+            }, 1000);
+          }, 8000); // Reduced to 8 seconds for faster recovery
+          
+          isRunning = true;
+          
+          try {
+            // Detect current page first
+            detectCurrentPage();
+            
+            // Check if URL has changed significantly
+            const currentUrl = window.location.href;
+            if (currentUrl !== lastProcessedUrl) {
+              console.log('🔄 URL changed, resetting state');
+              isInitialized = false;
+              lastDate = '';
+              lastProcessedUrl = currentUrl;
+            }
+            
+            // Phase 1: Handle Direct and Team subordinates (for Subordinate Data page)
+            if (currentPage === 'SubordinateData' || currentPage === 'Other') {
+              console.log('🔄 Processing Subordinate Data page...');
+              const infoDivs = safeQuerySelectorAll('.info');
+              if (infoDivs.length > 0) {
+                infoDivs.forEach(infoDiv => {
+                  try {
+                    const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3', infoDiv);
+                    lineDivs.forEach(lineDiv => {
+                      try {
+                        const numberDiv = safeQuerySelector('div', lineDiv);
+                        if (numberDiv && safeTextContent(numberDiv) === '0') {
+                          const textContent = safeTextContent(lineDiv);
+                          
+                          // Determine if it's team section
+                          const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
+                          const mapping = isTeamSection ? valueMappings.team : valueMappings.direct;
+                          
+                          // Apply appropriate values
+                          Object.entries(mapping).forEach(([key, value]) => {
+                            if (textContent.includes(key)) {
+                              numberDiv.textContent = value;
+                            }
+                          });
+                        }
+                      } catch (e) {
+                        // Individual line error - continue with others
+                      }
+                    });
+                  } catch (e) {
+                    // Individual info div error - continue with others
+                  }
+                });
+              }
+            }
+            
+            // Phase 1.1: Handle Promotion page (with new HTML structure)
+            if (currentPage === 'Promotion') {
+              console.log('🔄 Processing Promotion page...');
+              
+              // Look for .info_content container first
+              const infoContentDiv = safeQuerySelector('.info_content');
+              if (infoContentDiv) {
+                console.log('✅ Found .info_content container');
+                
+                // Get all .info divs within .info_content
+                const infoDivs = safeQuerySelectorAll('.info', infoContentDiv);
+                console.log(`📊 Found ${infoDivs.length} .info divs in .info_content`);
+                
+                infoDivs.forEach((infoDiv, infoIndex) => {
+                  try {
+                    console.log(`🔄 Processing .info div ${infoIndex + 1}...`);
+                    
+                    // Check if this is team section (has .head.u2 class)
+                    const headDiv = safeQuerySelector('.head', infoDiv);
+                    const isTeamSection = headDiv && headDiv.classList.contains('u2');
+                    const mapping = isTeamSection ? valueMappings.team : valueMappings.direct;
+                    
+                    console.log(`📋 Section type: ${isTeamSection ? 'Team subordinates' : 'Direct subordinates'}`);
+                    console.log(`📋 Using mapping:`, mapping);
+                    
+                    // Get all line divs (line1, line2, line3)
+                    const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3', infoDiv);
+                    console.log(`📊 Found ${lineDivs.length} line divs in this .info div`);
+                    
+                    lineDivs.forEach((lineDiv, lineIndex) => {
+                      try {
+                        // Find the number div (first div child)
+                        const numberDiv = safeQuerySelector('div', lineDiv);
+                        if (numberDiv) {
+                          const currentValue = safeTextContent(numberDiv);
+                          const lineText = safeTextContent(lineDiv);
+                          
+                          console.log(`📊 Line ${lineIndex + 1}: current value="${currentValue}", text="${lineText}"`);
+                          
+                          // Only update if current value is '0'
+                          if (currentValue === '0') {
+                            // Find matching key in mapping
+                            let matched = false;
+                            Object.entries(mapping).forEach(([key, value]) => {
+                              if (lineText.includes(key)) {
+                                console.log(`✅ Updating "${key}" from "${currentValue}" to "${value}"`);
+                                numberDiv.textContent = value;
+                                matched = true;
+                              }
+                            });
+                            
+                            if (!matched) {
+                              console.log(`⚠️ No mapping found for line: "${lineText}"`);
+                            }
+                          } else {
+                            console.log(`⏭️ Skipping line with non-zero value: "${currentValue}"`);
+                          }
+                        } else {
+                          console.log(`❌ No number div found in line ${lineIndex + 1}`);
+                        }
+                      } catch (e) {
+                        console.log(`❌ Error processing line ${lineIndex + 1}:`, e);
+                      }
+                    });
+                  } catch (e) {
+                    console.log(`❌ Error processing .info div ${infoIndex + 1}:`, e);
+                  }
+                });
+              } else {
+                console.log('❌ No .info_content container found');
+                
+                // Fallback: try to find .info divs directly
+                const infoDivs = safeQuerySelectorAll('.info');
+                if (infoDivs.length > 0) {
+                  console.log(`🔄 Fallback: Found ${infoDivs.length} .info divs directly`);
+                  
+                  infoDivs.forEach((infoDiv, infoIndex) => {
+                    try {
+                      const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
+                      const mapping = isTeamSection ? valueMappings.team : valueMappings.direct;
+                      
+                      const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3', infoDiv);
+                      lineDivs.forEach(lineDiv => {
+                        try {
+                          const numberDiv = safeQuerySelector('div', lineDiv);
+                          if (numberDiv && safeTextContent(numberDiv) === '0') {
+                            const textContent = safeTextContent(lineDiv);
+                            
+                            Object.entries(mapping).forEach(([key, value]) => {
+                              if (textContent.includes(key)) {
+                                console.log(`✅ Fallback update: "${key}" to "${value}"`);
+                                numberDiv.textContent = value;
+                              }
+                            });
+                          }
+                        } catch (e) {
+                          // Individual line error - continue with others
+                        }
+                      });
+                    } catch (e) {
+                      // Individual info div error - continue with others
+                    }
+                  });
+                }
+              }
+            }
+            
+            // Phase 1.5: Handle Promotion Data (for all pages)
+            const commissionDiv = safeQuerySelector('.commission');
+            if (commissionDiv) {
+              try {
+                const commissionBodyDivs = safeQuerySelectorAll('.commission__body', commissionDiv);
+                commissionBodyDivs.forEach(bodyDiv => {
+                  try {
+                    const spans = safeQuerySelectorAll('span', bodyDiv);
+                    spans.forEach(span => {
+                      try {
+                        const spanText = safeTextContent(span);
+                        if (spanText === '0') {
+                          // Find the label span (the one with descriptive text)
+                          const labelSpan = Array.from(spans).find(s => 
+                            safeTextContent(s) !== '0' && 
+                            safeTextContent(s) !== '' &&
+                            !safeTextContent(s).match(/^\d+\.?\d*$/)
+                          );
+                          
+                          if (labelSpan) {
+                            const label = safeTextContent(labelSpan);
+                            // Apply promotion data values
+                            Object.entries(valueMappings.promotion).forEach(([key, value]) => {
+                              if (label.includes(key)) {
+                                span.textContent = value;
+                              }
+                            });
+                          }
+                        }
+                      } catch (e) {
+                        // Individual span error - continue with others
+                      }
+                    });
+                  } catch (e) {
+                    // Individual body div error - continue with others
+                  }
+                });
+              } catch (e) {
+                // Promotion data error - continue
+              }
+            }
+            
+            // Phase 2: Handle Team Report page (simplified and more robust)
+            if (currentPage === 'TeamReport') {
+              console.log('🔄 Processing Team Report page...');
+             const headerContainer = safeQuerySelector('.header-container');
+              
+             if (headerContainer) {
+                console.log('✅ Found header container');
+                try {
+                  // Get current date with correct HTML structure detection
+                  // Based on actual HTML: <div class="TeamReport__C-head-line2"><div><span class="default">2025-08-31</span></div></div>
+                  console.log('📅 Starting date detection in replaceValues...');
+                  
+                  let dateSpan = null;
+                  let selectorUsed = '';
+                  
+                  // Try selector 1: .TeamReport__C-head-line2 span.default (target second span)
+                  dateSpan = safeQuerySelector('.TeamReport__C-head-line2 div:nth-child(2) span.default');
+                  if (dateSpan) {
+                    selectorUsed = '.TeamReport__C-head-line2 div:nth-child(2) span.default';
+                    console.log('✅ replaceValues: Found date with selector 1:', selectorUsed);
+                  } else {
+                    console.log('❌ replaceValues: Selector 1 failed: .TeamReport__C-head-line2 div:nth-child(2) span.default');
+                  }
+                  
+                  // Try selector 2: .TeamReport__C-head-line2 div:nth-child(2) span[class*="default"]
+                 if (!dateSpan) {
+                    dateSpan = safeQuerySelector('.TeamReport__C-head-line2 div:nth-child(2) span[class*="default"]');
+                    if (dateSpan) {
+                      selectorUsed = '.TeamReport__C-head-line2 div:nth-child(2) span[class*="default"]';
+                      console.log('✅ replaceValues: Found date with selector 2:', selectorUsed);
+                    } else {
+                      console.log('❌ replaceValues: Selector 2 failed: .TeamReport__C-head-line2 div:nth-child(2) span[class*="default"]');
+                    }
+                  }
+                  
+                  // Try selector 3: All spans with default class, then find the one that's not "All"
+                   if (!dateSpan) {
+                    const allDefaultSpans = safeQuerySelectorAll('.TeamReport__C-head-line2 span.default');
+                    console.log('📅 replaceValues: Found', allDefaultSpans.length, 'spans with default class');
+                    
+                    for (let i = 0; i < allDefaultSpans.length; i++) {
+                      const span = allDefaultSpans[i];
+                      const text = safeTextContent(span);
+                      console.log(`📅 replaceValues: Span ${i}: "${text}"`);
+                      
+                      // Skip "All" and look for date-like text
+                      if (text && text !== 'All' && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                        dateSpan = span;
+                        selectorUsed = `.TeamReport__C-head-line2 span.default (index ${i})`;
+                        console.log('✅ replaceValues: Found date with selector 3:', selectorUsed, 'Text:', text);
+                        break;
+                      }
+                    }
+                    
+                    if (!dateSpan) {
+                      console.log('❌ replaceValues: Selector 3 failed: No date found in default spans');
+                    }
+                  }
+                  
+                  // Try selector 4: [data-v-10d1559c].default (but skip "All")
+                  if (!dateSpan) {
+                    const allDataSpans = safeQuerySelectorAll('[data-v-10d1559c].default');
+                    console.log('📅 replaceValues: Found', allDataSpans.length, 'spans with data-v-10d1559c and default class');
+                    
+                    for (let i = 0; i < allDataSpans.length; i++) {
+                      const span = allDataSpans[i];
+                      const text = safeTextContent(span);
+                      console.log(`📅 replaceValues: Data span ${i}: "${text}"`);
+                      
+                      // Skip "All" and look for date-like text
+                      if (text && text !== 'All' && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                        dateSpan = span;
+                        selectorUsed = `[data-v-10d1559c].default (index ${i})`;
+                        console.log('✅ replaceValues: Found date with selector 4:', selectorUsed, 'Text:', text);
+                        break;
+                      }
+                    }
+                    
+                    if (!dateSpan) {
+                      console.log('❌ replaceValues: Selector 4 failed: No date found in data-v spans');
+                   }
+                 }
+                 
+                 let selectedDate = null;
+                 
+                 if (dateSpan) {
+                   const dateText = safeTextContent(dateSpan);
+                    console.log('📅 replaceValues: Date element found!');
+                    console.log('📅 replaceValues: Element HTML:', dateSpan.outerHTML);
+                    console.log('📅 replaceValues: Element text content:', dateText);
+                    console.log('📅 replaceValues: Element classes:', dateSpan.className);
+                    console.log('📅 replaceValues: Available dates in mappings:', Object.keys(valueMappings.dates));
+                   
+                   // Try to find exact match first
+                   if (dateText && valueMappings.dates[dateText]) {
+                     selectedDate = dateText;
+                      console.log('✅ replaceValues: Using exact date match:', selectedDate);
+                   } else if (dateText) {
+                      console.log('❌ replaceValues: No exact date match found for:', dateText);
+                      
+                     // Try to find partial match (month-day)
+                     const availableDates = Object.keys(valueMappings.dates);
+                      console.log('🔄 replaceValues: Trying partial month-day matching...');
+                      
+                     for (let date of availableDates) {
+                       if (dateText.includes(date.substring(5))) { // Match month-day part
+                         selectedDate = date;
+                          console.log('✅ replaceValues: Using partial date match:', selectedDate);
+                         break;
+                       }
+                     }
+                     
+                      // If still no match, use the most recent one
+                 if (!selectedDate) {
+                   const availableDates = Object.keys(valueMappings.dates).sort().reverse();
+                   selectedDate = availableDates[0];
+                        console.log('⚠️ replaceValues: Using fallback date (most recent):', selectedDate);
+                      }
+                 }
+                 
+                 const currentValues = valueMappings.dates[selectedDate];
+                    if (currentValues) {
+                      console.log('📊 replaceValues: Current values for date', selectedDate, ':', currentValues);
+                 
+                      // Replace header values
+                 const numDivs = safeQuerySelectorAll('.num', headerContainer);
+                 console.log('Found', numDivs.length, 'num divs');
+                 
+                 numDivs.forEach((numDiv, index) => {
+                   try {
+                     const currentText = safeTextContent(numDiv);
+                     
+                     if (currentText === '0' || currentText === '') {
+                       const parentDiv = numDiv.parentElement;
+                       if (parentDiv) {
+                         const textContent = safeTextContent(parentDiv);
+                         
+                         // More specific matching
+                         let matched = false;
+                         Object.entries(currentValues).forEach(([key, value]) => {
+                           if (textContent.includes(key)) {
+                             numDiv.textContent = value;
+                             console.log('Updated', key, 'to', value);
+                             matched = true;
+                           }
+                         });
+                         
+                         if (!matched) {
+                           // Fallback: try to match by position/index
+                           const keys = Object.keys(currentValues);
+                           if (index < keys.length) {
+                             const key = keys[index];
+                             const value = currentValues[key];
+                             numDiv.textContent = value;
+                             console.log('Fallback update by index', index, ':', key, '=', value);
+                           }
+                         }
+                       }
+                     }
+                   } catch (e) {
+                     console.log('Error updating num div', index, ':', e);
+                   }
+                 });
+                 
+                 // Update last known date
+                 lastDate = selectedDate;
+                      console.log('🔄 replaceValues: Updated last known date to:', lastDate);
+                    }
+                  } else {
+                    console.log('❌ replaceValues: No date span found');
+                    console.log('📅 replaceValues: Available spans on page:', document.querySelectorAll('span').length);
+                    console.log('📅 replaceValues: Available elements with "default" class:', document.querySelectorAll('[class*="default"]').length);
+                    console.log('📅 replaceValues: Available elements with "TeamReport" class:', document.querySelectorAll('[class*="TeamReport"]').length);
+                    
+                    // Apply fallback values without date matching
+                    _applyFallbackValues(headerContainer);
+                  }
+                } catch (e) {
+                  console.log('Team Report error:', e);
+                  console.log('Team Report error stack:', e.stack);
+                  // Apply fallback values on error
+                  _applyFallbackValues(headerContainer);
+                }
+              } else {
+                console.log('❌ Header container not found');
+              }
+            }
+            
+            // Mark as initialized and clear timeout
+            isInitialized = true;
+            retryCount = 0;
+            
+            if (processingTimeout) {
+              clearTimeout(processingTimeout);
+              processingTimeout = null;
+            }
+            
+          } catch (error) {
+            console.log('Replace values error:', error);
+            retryCount++;
+            // Force reset on critical errors
+            if (retryCount > 3) {
+              console.log('⚠️ Too many errors, forcing reset');
+              isInitialized = false;
+              retryCount = 0;
+            }
+          } finally {
+            isRunning = false;
+          }
+        }
+        
+        // Fallback function to apply values without date matching
+        function _applyFallbackValues(headerContainer) {
+          console.log('🔄 Applying fallback values...');
+          try {
+            const numDivs = safeQuerySelectorAll('.num', headerContainer);
+            if (numDivs.length > 0) {
+              // Use values from the most recent date as fallback
+              const fallbackDate = Object.keys(valueMappings.dates).sort().reverse()[0];
+              const fallbackValues = valueMappings.dates[fallbackDate];
+              
+              numDivs.forEach((numDiv, index) => {
+                try {
+                  if (safeTextContent(numDiv) === '0' || safeTextContent(numDiv) === '') {
+                    const keys = Object.keys(fallbackValues);
+                    if (index < keys.length) {
+                      const key = keys[index];
+                      const value = fallbackValues[key];
+                      numDiv.textContent = value;
+                      console.log('Fallback applied:', key, '=', value);
+                    }
+                  }
+                } catch (e) {
+                  console.log('Error applying fallback value:', e);
+                }
+              });
+            }
+          } catch (e) {
+            console.log('Fallback processing error:', e);
+          }
+        }
+        
+        // Smart initialization with better error handling
+        function initialize() {
+          if (isInitialized && retryCount === 0) return;
+          
+          const body = safeQuerySelector('body');
+          if (body) {
+            // Detect page before processing
+            detectCurrentPage();
+            
+            // Prevent infinite loops
+            if (retryCount > maxRetries) {
+              console.log('⚠️ Max retries reached, stopping initialization');
+              isInitialized = true;
+              retryCount = 0;
+              return;
+            }
+            
+            replaceValues();
+          } else if (retryCount < maxRetries) {
+            retryCount++;
+            setTimeout(initialize, 1000);
+          }
+        }
+        
+                // Date watcher function to monitor date changes (passive mode)
+        function startDateWatcher() {
+          console.log('📅 Starting passive date watcher...');
+          let lastCheckTime = Date.now();
+          
+          // Passive monitoring only - no automatic triggers
+          console.log('📅 Date watcher: Running in passive mode - no automatic refresh');
+          
+           setInterval(() => {
+             try {
+              // Check if we're still on TeamReport page
+              if (currentPage !== 'TeamReport') {
+                console.log('📅 Date watcher: Not on TeamReport page, current page:', currentPage);
+                return;
+              }
+              
+              const currentTime = Date.now();
+              const timeSinceLastCheck = currentTime - lastCheckTime;
+              lastCheckTime = currentTime;
+              
+              console.log('📅 Date watcher: Checking for date changes... (time since last check:', timeSinceLastCheck + 'ms)');
+              
+              // Get the current date element with detailed logging
+              console.log('📅 Date watcher: Trying different date selectors...');
+              
+              let dateSpan = null;
+              let selectorUsed = '';
+              
+              // Try selector 1: .TeamReport__C-head-line2 div:nth-child(2) span.default (target second div)
+              dateSpan = safeQuerySelector('.TeamReport__C-head-line2 div:nth-child(2) span.default');
+              if (dateSpan) {
+                selectorUsed = '.TeamReport__C-head-line2 div:nth-child(2) span.default';
+                console.log('✅ Date watcher: Found date with selector 1:', selectorUsed);
+              } else {
+                console.log('❌ Date watcher: Selector 1 failed: .TeamReport__C-head-line2 div:nth-child(2) span.default');
+              }
+              
+              // Try selector 2: All spans with default class, then find the one that's not "All"
+              if (!dateSpan) {
+                const allDefaultSpans = safeQuerySelectorAll('.TeamReport__C-head-line2 span.default');
+                console.log('📅 Date watcher: Found', allDefaultSpans.length, 'spans with default class');
+                
+                for (let i = 0; i < allDefaultSpans.length; i++) {
+                  const span = allDefaultSpans[i];
+                  const text = safeTextContent(span);
+                  console.log(`📅 Date watcher: Span ${i}: "${text}"`);
+                  
+                  // Skip "All" and look for date-like text
+                  if (text && text !== 'All' && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                    dateSpan = span;
+                    selectorUsed = `.TeamReport__C-head-line2 span.default (index ${i})`;
+                    console.log('✅ Date watcher: Found date with selector 2:', selectorUsed, 'Text:', text);
+                    break;
+                  }
+                }
+                
+                if (!dateSpan) {
+                  console.log('❌ Date watcher: Selector 2 failed: No date found in default spans');
+                }
+              }
+              
+              // Try selector 3: [data-v-10d1559c].default (but skip "All")
+              if (!dateSpan) {
+                const allDataSpans = safeQuerySelectorAll('[data-v-10d1559c].default');
+                console.log('📅 Date watcher: Found', allDataSpans.length, 'spans with data-v-10d1559c and default class');
+                
+                for (let i = 0; i < allDataSpans.length; i++) {
+                  const span = allDataSpans[i];
+                  const text = safeTextContent(span);
+                  console.log(`📅 Date watcher: Data span ${i}: "${text}"`);
+                  
+                  // Skip "All" and look for date-like text
+                  if (text && text !== 'All' && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                    dateSpan = span;
+                    selectorUsed = `[data-v-10d1559c].default (index ${i})`;
+                    console.log('✅ Date watcher: Found date with selector 3:', selectorUsed, 'Text:', text);
+                    break;
+                  }
+                }
+                
+                if (!dateSpan) {
+                  console.log('❌ Date watcher: Selector 3 failed: No date found in data-v spans');
+                }
+              }
+              
+              if (dateSpan) {
+                const currentDate = safeTextContent(dateSpan);
+                console.log('📅 Date watcher: Date element found!');
+                console.log('📅 Date watcher: Element HTML:', dateSpan.outerHTML);
+                console.log('📅 Date watcher: Element text content:', currentDate);
+                console.log('📅 Date watcher: Element classes:', dateSpan.className);
+                console.log('📅 Date watcher: Element attributes:', dateSpan.attributes);
+                console.log('📅 Date watcher: Current date detected:', currentDate);
+                
+                // Automatically fetch and update values for this date
+                console.log('🔄 Date watcher: Fetching and updating values for date:', currentDate);
+                console.log('🔄 Date watcher: Available dates in mappings:', Object.keys(valueMappings.dates));
+                console.log('🔄 Date watcher: Date exists in mappings:', valueMappings.dates[currentDate] ? 'YES' : 'NO');
+                
+                setTimeout(() => {
+                  console.log('🔄 Date watcher: Calling replaceValues for date:', currentDate);
+                  console.log('🔄 Date watcher: Before replaceValues - current page:', currentPage);
+                  replaceValues();
+                  console.log('🔄 Date watcher: After replaceValues completed');
+                }, 500);
+              } else {
+                console.log('❌ Date watcher: No date element found with any selector');
+                console.log('📅 Date watcher: Available spans on page:', document.querySelectorAll('span').length);
+                console.log('📅 Date watcher: Available elements with "default" class:', document.querySelectorAll('[class*="default"]').length);
+                console.log('📅 Date watcher: Available elements with "TeamReport" class:', document.querySelectorAll('[class*="TeamReport"]').length);
+              }
+           } catch (e) {
+              console.log('❌ Date watcher error:', e);
+              console.log('❌ Date watcher error stack:', e.stack);
+            }
+          }, 3000); // Check every 3 seconds (less frequent)
+        }
+        
+        // Manual function to start date watcher
+        window.startDateWatcher = function() {
+          console.log('📅 Manually starting date watcher...');
+          startDateWatcher();
+        };
+        
+        // Function to check current date and force refresh
+        window.checkAndRefreshDate = function() {
+          console.log('🔍 Checking current date and refreshing...');
+          const dateSpan = safeQuerySelector('.TeamReport__C-head-line2 span.default') || 
+                          safeQuerySelector('.TeamReport__C-head-line2 span[class*="default"]') ||
+                          safeQuerySelector('[data-v-10d1559c].default') || 
+                          safeQuerySelector('span.default');
+          
+          if (dateSpan) {
+            const currentDate = safeTextContent(dateSpan);
+            console.log('Current date:', currentDate);
+            
+            if (currentDate && valueMappings.dates[currentDate]) {
+              console.log('✅ Date found in mappings, refreshing values...');
+              isInitialized = false;
+              lastDate = '';
+              setTimeout(replaceValues, 500);
+            } else {
+              console.log('❌ Date not found in mappings:', currentDate);
+              console.log('Available dates:', Object.keys(valueMappings.dates));
+            }
+          } else {
+            console.log('❌ No date element found');
+          }
+        };
+        
+        // Manual function to test value updates
+        window.testValueUpdate = function() {
+          console.log('🧪 Testing value update manually...');
+          console.log('Current page:', currentPage);
+          console.log('Available dates:', Object.keys(valueMappings.dates));
+          
+          // Force call replaceValues
+          console.log('🧪 Calling replaceValues directly...');
+          replaceValues();
+          
+          // Check if values were updated
+          setTimeout(() => {
+            const headerContainer = safeQuerySelector('.header-container');
+            if (headerContainer) {
+              const numDivs = safeQuerySelectorAll('.num', headerContainer);
+              console.log('🧪 Found', numDivs.length, 'num divs after update');
+              numDivs.forEach((div, index) => {
+                const text = safeTextContent(div);
+                console.log(`🧪 Num div ${index}: "${text}"`);
+              });
+            } else {
+              console.log('🧪 No header container found');
+            }
+          }, 1000);
+        };
+        
+        // Simplified monitoring without aggressive DOM watching
+        function startMonitoring() {
+          // Initial run only
+          setTimeout(initialize, 1000);
+          
+          // URL change monitoring only
+          let lastUrl = window.location.href;
+          setInterval(() => {
+            if (window.location.href !== lastUrl) {
+              lastUrl = window.location.href;
+              console.log('URL changed, forcing refresh');
+              isInitialized = false;
+              lastDate = '';
+              setTimeout(replaceValues, 500);
+            }
+          }, 500);
+          
+          // Start date watcher if on TeamReport page (passive mode)
+          setTimeout(() => {
+            if (currentPage === 'TeamReport') {
+              startDateWatcher();
+            }
+          }, 2000); // Start after initial page load
+        }
+        
+        // Start the system
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', startMonitoring);
+        } else {
+          startMonitoring();
+        }
+        
+        // Fallback for late loading
+        window.addEventListener('load', () => {
+          if (!isInitialized) {
+            setTimeout(initialize, 2000);
+          }
+        });
+        
+        // Manual refresh function
+        window.forceRefresh = function() {
+          console.log('🔄 Manual refresh triggered');
+          isInitialized = false;
+          lastDate = '';
+          replaceValues();
+        };
+        
+        // Force complete reset function
+        window.forceReset = function() {
+          console.log('🔄 Force reset triggered');
+          isInitialized = false;
+          lastDate = '';
+          currentPage = '';
+          isTeamReportPage = false;
+          retryCount = 0;
+          if (processingTimeout) {
+            clearTimeout(processingTimeout);
+            processingTimeout = null;
+          }
+          // Force page reload
+          window.location.reload();
+        };
+        
+        // Function to check current page and prevent getting stuck
+        window.checkCurrentPage = function() {
+          detectCurrentPage();
+          console.log('Current page:', currentPage);
+          console.log('Is Team Report page:', isTeamReportPage);
+          console.log('Is initialized:', isInitialized);
+          console.log('Retry count:', retryCount);
+          
+          // Auto-fix if stuck
+          if (currentPage === 'TeamReport' && isInitialized) {
+            const headerContainer = safeQuerySelector('.header-container');
+            if (headerContainer) {
+              const numDivs = safeQuerySelectorAll('.num', headerContainer);
+              let hasZeros = false;
+              numDivs.forEach(numDiv => {
+                if (safeTextContent(numDiv) === '0') {
+                  hasZeros = true;
+                }
+              });
+              
+              if (hasZeros) {
+                console.log('🔄 Auto-fix: Found 0 values, forcing refresh');
+                isInitialized = false;
+                setTimeout(replaceValues, 500);
+              }
+            }
+          }
+        };
+        
+        // Function to reset page state
+        window.resetPageState = function() {
+          console.log('🔄 Resetting page state...');
+          isInitialized = false;
+          lastDate = '';
+          currentPage = '';
+          isTeamReportPage = false;
+          retryCount = 0;
+          if (processingTimeout) {
+            clearTimeout(processingTimeout);
+            processingTimeout = null;
+          }
+          detectCurrentPage();
+          replaceValues();
+        };
+        
+        // Function to manually monitor date changes
+        window.monitorDateChanges = function() {
+          console.log('📅 Starting manual date monitoring...');
+          if (currentPage === 'TeamReport') {
+            startDateWatcher();
+            console.log('✅ Date monitoring started for TeamReport page');
+          } else {
+            console.log('❌ Not on TeamReport page, current page:', currentPage);
+          }
+        };
+        
+        // Emergency stop function
+        window.emergencyStop = function() {
+          console.log('🛑 Emergency stop triggered');
+          isInitialized = true;
+          isRunning = false;
+          retryCount = 0;
+          if (processingTimeout) {
+            clearTimeout(processingTimeout);
+            processingTimeout = null;
+          }
+        };
+        
+        // Comprehensive debug and recovery function
+        window.debugAndRecover = function() {
+          console.log('🔍 DEBUG: Starting comprehensive diagnosis...');
+          
+          // Check current state
+          console.log('Current state:', {
+            currentPage: currentPage,
+            isTeamReportPage: isTeamReportPage,
+            isInitialized: isInitialized,
+            isRunning: isRunning,
+            retryCount: retryCount,
+            lastDate: lastDate,
+            lastProcessedUrl: lastProcessedUrl
+          });
+          
+          // Check DOM elements
+          const headerContainer = safeQuerySelector('.header-container');
+          console.log('Header container found:', !!headerContainer);
+          
+          if (headerContainer) {
+            const numDivs = safeQuerySelectorAll('.num', headerContainer);
+            console.log('Number divs found:', numDivs.length);
+            
+            numDivs.forEach((div, index) => {
+              const text = safeTextContent(div);
+              const parentText = safeTextContent(div.parentElement);
+              console.log(`Div ${index}: text="${text}", parent="${parentText}"`);
+            });
+          }
+          
+          // Check date elements
+          const dateSelectors = [
+            '[data-v-10d1559c].default',
+            'span.default',
+            'span[class*="default"]'
+          ];
+          
+          dateSelectors.forEach((selector, index) => {
+            const element = document.querySelector(selector);
+            if (element) {
+              console.log(`Date selector ${index + 1} (${selector}):`, element.textContent);
+            } else {
+              console.log(`Date selector ${index + 1} (${selector}): Not found`);
+            }
+          });
+          
+          // Check available dates
+          console.log('Available dates in mappings:', Object.keys(valueMappings.dates));
+          
+          // Auto-recovery if needed
+          if (currentPage === 'TeamReport') {
+            const headerContainer = safeQuerySelector('.header-container');
+            if (headerContainer) {
+              const numDivs = safeQuerySelectorAll('.num', headerContainer);
+              let hasZeros = false;
+              numDivs.forEach(numDiv => {
+                if (safeTextContent(numDiv) === '0') {
+                  hasZeros = true;
+                }
+              });
+              
+              if (hasZeros) {
+                console.log('🔄 Auto-recovery: Found 0 values, forcing refresh');
+                isInitialized = false;
+                setTimeout(replaceValues, 500);
+              } else {
+                console.log('✅ All values look good, no recovery needed');
+              }
+            }
+          }
+          
+          console.log('🔍 DEBUG: Diagnosis complete');
+        };
+        
+        // Quick fix function for immediate recovery
+        window.quickFix = function() {
+          console.log('🚀 Quick fix triggered');
+          isInitialized = false;
+          isRunning = false;
+          retryCount = 0;
+          if (processingTimeout) {
+            clearTimeout(processingTimeout);
+            processingTimeout = null;
+          }
+          setTimeout(replaceValues, 100);
+        };
+        
+      })();
+    ''';
+
+    _controller.runJavaScript(script);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WebViewWidget(controller: _controller);
+  }
+}

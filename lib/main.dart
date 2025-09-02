@@ -2,66 +2,73 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const BharatWinnApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
-  static const String defaultUrl =
-      'https://bharatwinn.site/#/register?invitationCode=7729082258040';
+class BharatWinnApp extends StatelessWidget {
+  const BharatWinnApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: SafeArea(child: _WebViewScreen(initialUrl: defaultUrl)),
-      ),
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(body: SafeArea(child: TeamReportWebView())),
     );
   }
 }
 
-class _WebViewScreen extends StatefulWidget {
-  const _WebViewScreen({required this.initialUrl});
-
-  final String initialUrl;
+class TeamReportWebView extends StatefulWidget {
+  const TeamReportWebView({super.key});
 
   @override
-  State<_WebViewScreen> createState() => _WebViewScreenState();
+  State<TeamReportWebView> createState() => _TeamReportWebViewState();
 }
 
-class _WebViewScreenState extends State<_WebViewScreen> {
+class _TeamReportWebViewState extends State<TeamReportWebView> {
   late final WebViewController _controller;
 
   @override
   void initState() {
     super.initState();
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageFinished: (String url) {
-            _injectReplacementScript();
+          onPageStarted: (url) {
+            print("🌐 Page started loading: $url");
+          },
+          onPageFinished: (url) async {
+            print("✅ Page finished loading: $url");
+            if (url.contains("/promotion")) {
+              print("📊 Injecting promotion script...");
+              await _injectTeamReportScript();
+            }
+          },
+          onWebResourceError: (error) {
+            print("❌ WebView error: ${error.description}");
           },
         ),
       )
-      ..loadRequest(Uri.parse(widget.initialUrl));
+      ..loadRequest(Uri.parse("https://bharatwinn.site/#/"));
   }
 
-  void _injectReplacementScript() {
-    const script = r'''
+  /// Injects JavaScript into the TeamReport page
+  Future<void> _injectTeamReportScript() async {
+    const jsScript = r"""
       (function() {
-        'use strict';
+        console.log("🚀 [Injector] TeamReport script injected successfully");
+        console.log("🚀 [Injector] Current URL:", window.location.href);
+        console.log("🚀 [Injector] Current page title:", document.title);
+        console.log("🚀 [Injector] Document ready state:", document.readyState);
+        console.log("🚀 [Injector] Script execution time:", new Date().toISOString());
+
+        // -------------------------
+        // 1. Data Mappings
+        // -------------------------
         
-        // Global state management
-        let isInitialized = false;
-        let lastDate = '';
-        let retryCount = 0;
-        let maxRetries = 10;
-        let isRunning = false;
-        
-        // Enhanced value mappings with fallbacks
-        const valueMappings = {
+        // Promotion page data mappings
+        const promotionData = {
           // Direct subordinates
           'direct': {
             'number of register': '52',
@@ -76,97 +83,161 @@ class _WebViewScreenState extends State<_WebViewScreen> {
             'Deposit amount': '2100',
             'Number of people making first deposit': '1'
           },
-          // Promotion data
-          'promotion': {
+          // Commission/Promotion data
+          'commission': {
             'This Week': '251.58',
             'Total commission': '11464.89',
             'direct subordinate': '2465',
             'Total number of subordinates in the team': '145'
-          },
-          // Team Report dates
-          'dates': {
-            '2025-08-29': {
-              'Deposit number': '61',
-              'Deposit amount': '33026',
-              'Number of bettors': '80',
-              'Total bet': '150217',
-              'Number of people making first deposit': '16',
-              'First deposit amount': '13455'
-            },
-            '2025-08-28': {
-              'Deposit number': '62',
-              'Deposit amount': '34124',
-              'Number of bettors': '75',
-              'Total bet': '163823',
-              'Number of people making first deposit': '19',
-              'First deposit amount': '14524'
-            },
-            '2025-08-27': {
-              'Deposit number': '70',
-              'Deposit amount': '40585',
-              'Number of bettors': '76',
-              'Total bet': '245767',
-              'Number of people making first deposit': '19',
-              'First deposit amount': '21119'
-            },
-            '2025-08-26': {
-              'Deposit number': '61',
-              'Deposit amount': '44363',
-              'Number of bettors': '74',
-              'Total bet': '187832',
-              'Number of people making first deposit': '26',
-              'First deposit amount': '23885'
-            },
-            '2025-08-25': {
-              'Deposit number': '70',
-              'Deposit amount': '43468',
-              'Number of bettors': '80',
-              'Total bet': '191321',
-              'Number of people making first deposit': '33',
-              'First deposit amount': '18347'
-            },
-            '2025-08-24': {
-              'Deposit number': '66',
-              'Deposit amount': '30045',
-              'Number of bettors': '81',
-              'Total bet': '191924',
-              'Number of people making first deposit': '29',
-              'First deposit amount': '14402'
-            },
-            '2025-08-23': {
-              'Deposit number': '63',
-              'Deposit amount': '40824',
-              'Number of bettors': '78',
-              'Total bet': '256046',
-              'Number of people making first deposit': '29',
-              'First deposit amount': '20954'
-            },
-            '2025-08-22': {
-              'Deposit number': '51',
-              'Deposit amount': '23934',
-              'Number of bettors': '62',
-              'Total bet': '132607',
-              'Number of people making first deposit': '15',
-              'First deposit amount': '11774'
-            },
-            '2025-08-21': {
-              'Deposit number': '51',
-              'Deposit amount': '22181',
-              'Number of bettors': '62',
-              'Total bet': '124103',
-              'Number of people making first deposit': '14',
-              'First deposit amount': '9241'
-            },
-            '2025-08-20': {
-              'Deposit number': '52',
-              'Deposit amount': '26632',
-              'Number of bettors': '72',
-              'Total bet': '129343',
-              'Number of people making first deposit': '13',
-              'First deposit amount': '11636'
-            }
           }
         };
+        
+        // Team Report date data mapping (2025-08-20 → 2025-09-02)
+        const dateData = {
+          "2025-09-02": {
+            "Deposit number": "75",
+            "Deposit amount": "54800",
+            "Number of bettors": "92",
+            "Total bet": "238000",
+            "Number of people making first deposit": "35",
+            "First deposit amount": "32800"
+          },
+          "2025-09-01": {
+            "Deposit number": "72",
+            "Deposit amount": "52000",
+            "Number of bettors": "88",
+            "Total bet": "225000",
+            "Number of people making first deposit": "32",
+            "First deposit amount": "31000"
+          },
+          "2025-08-31": {
+            "Deposit number": "68",
+            "Deposit amount": "47890",
+            "Number of bettors": "85",
+            "Total bet": "210000",
+            "Number of people making first deposit": "30",
+            "First deposit amount": "28900"
+          },
+          "2025-08-30": {
+            "Deposit number": "65",
+            "Deposit amount": "45678",
+            "Number of bettors": "82",
+            "Total bet": "198765",
+            "Number of people making first deposit": "28",
+            "First deposit amount": "25678"
+          },
+          "2025-08-29": {
+            "Deposit number": "61",
+            "Deposit amount": "33026",
+            "Number of bettors": "80",
+            "Total bet": "150217",
+            "Number of people making first deposit": "16",
+            "First deposit amount": "13455"
+          },
+          "2025-08-28": {
+            "Deposit number": "62",
+            "Deposit amount": "34124",
+            "Number of bettors": "75",
+            "Total bet": "163823",
+            "Number of people making first deposit": "19",
+            "First deposit amount": "14524"
+          },
+          "2025-08-27": {
+            "Deposit number": "70",
+            "Deposit amount": "40585",
+            "Number of bettors": "76",
+            "Total bet": "245767",
+            "Number of people making first deposit": "19",
+            "First deposit amount": "21119"
+          },
+          "2025-08-26": {
+            "Deposit number": "61",
+            "Deposit amount": "44363",
+            "Number of bettors": "74",
+            "Total bet": "187832",
+            "Number of people making first deposit": "26",
+            "First deposit amount": "23885"
+          },
+          "2025-08-25": {
+            "Deposit number": "70",
+            "Deposit amount": "43468",
+            "Number of bettors": "80",
+            "Total bet": "191321",
+            "Number of people making first deposit": "33",
+            "First deposit amount": "18347"
+          },
+          "2025-08-24": {
+            "Deposit number": "66",
+            "Deposit amount": "30045",
+            "Number of bettors": "81",
+            "Total bet": "191924",
+            "Number of people making first deposit": "29",
+            "First deposit amount": "14402"
+          },
+          "2025-08-23": {
+            "Deposit number": "63",
+            "Deposit amount": "40824",
+            "Number of bettors": "78",
+            "Total bet": "256046",
+            "Number of people making first deposit": "29",
+            "First deposit amount": "20954"
+          },
+          "2025-08-22": {
+            "Deposit number": "51",
+            "Deposit amount": "23934",
+            "Number of bettors": "62",
+            "Total bet": "132607",
+            "Number of people making first deposit": "15",
+            "First deposit amount": "11774"
+          },
+          "2025-08-21": {
+            "Deposit number": "51",
+            "Deposit amount": "22181",
+            "Number of bettors": "62",
+            "Total bet": "124103",
+            "Number of people making first deposit": "14",
+            "First deposit amount": "9241"
+          },
+          "2025-08-20": {
+            "Deposit number": "52",
+            "Deposit amount": "26632",
+            "Number of bettors": "72",
+            "Total bet": "129343",
+            "Number of people making first deposit": "13",
+            "First deposit amount": "11636"
+          }
+        };
+
+        // -------------------------
+        // 2. Page Detection and Utility Functions
+        // -------------------------
+        
+        // Page detection function
+        function detectCurrentPage() {
+          const url = window.location.href;
+          const body = document.body;
+          
+          // Detect Team Report page
+          if (url.includes('/#/promotion/TeamReport') || 
+              url.includes('TeamReport') ||
+              body.querySelector('.header-container')) {
+            console.log('📍 Detected Team Report page');
+            return 'TeamReport';
+          }
+          // Detect Promotion page (with new HTML structure)
+          else if (url.includes('/#/promotion') || 
+                   url.includes('promotion') ||
+                   body.querySelector('.info_content') ||
+                   body.querySelector('.info') && body.querySelector('.head')) {
+            console.log('📍 Detected Promotion page');
+            return 'Promotion';
+          }
+          // Detect other pages
+          else {
+            console.log('📍 Detected other page:', url);
+            return 'Other';
+          }
+        }
         
         // Utility functions
         function safeQuerySelector(selector, parent = document) {
@@ -193,17 +264,137 @@ class _WebViewScreenState extends State<_WebViewScreen> {
           }
         }
         
-        // Core replacement function
-        function replaceValues() {
-          if (isRunning) return; // Prevent overlapping executions
-          isRunning = true;
+        // -------------------------
+        // 3. Enhanced DOM Debugging
+        // -------------------------
+        function debugDOM() {
+          console.log("🔍 [Debug] Starting DOM analysis...");
           
-          try {
-            // Phase 1: Handle Direct and Team subordinates
+          // Check for various possible containers
+          const containers = [
+            '.header-container',
+            '[class*="header"]',
+            '[class*="container"]',
+            '.TeamReport',
+            '[class*="TeamReport"]'
+          ];
+          
+          containers.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            console.log(`📦 [Debug] Found ${elements.length} elements for selector: ${selector}`);
+            elements.forEach((el, i) => {
+              console.log(`  ${i}: ${el.className} - ${el.textContent.substring(0, 100)}...`);
+            });
+          });
+          
+          // Check for data items
+          const dataSelectors = [
+            'div[data-v-10d1559c]',
+            '[class*="num"]',
+            '.num',
+            '[class*="data"]',
+            'div[class*="item"]'
+          ];
+          
+          dataSelectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            console.log(`📊 [Debug] Found ${elements.length} data elements for selector: ${selector}`);
+            elements.forEach((el, i) => {
+              console.log(`  ${i}: ${el.className} - "${el.textContent.trim()}"`);
+            });
+          });
+        }
+
+        // -------------------------
+        // 3. Promotion Page Data Update Function
+        // -------------------------
+        function updatePromotionData() {
+          console.log("🔄 [Promotion] Starting promotion data update...");
+          
+          // Look for .info_content container first
+          const infoContentDiv = safeQuerySelector('.info_content');
+          if (infoContentDiv) {
+            console.log('✅ [Promotion] Found .info_content container');
+            
+            // Get all .info divs within .info_content
+            const infoDivs = safeQuerySelectorAll('.info', infoContentDiv);
+            console.log(`📊 [Promotion] Found ${infoDivs.length} .info divs in .info_content`);
+            
+            let totalUpdated = 0;
+            
+            infoDivs.forEach((infoDiv, infoIndex) => {
+              try {
+                console.log(`🔄 [Promotion] Processing .info div ${infoIndex + 1}...`);
+                
+                // Check if this is team section (has .head.u2 class)
+                const headDiv = safeQuerySelector('.head', infoDiv);
+                const isTeamSection = headDiv && headDiv.classList.contains('u2');
+                const mapping = isTeamSection ? promotionData.team : promotionData.direct;
+                
+                console.log(`📋 [Promotion] Section type: ${isTeamSection ? 'Team subordinates' : 'Direct subordinates'}`);
+                console.log(`📋 [Promotion] Using mapping:`, mapping);
+                
+                // Get all line divs (line1, line2, line3)
+                const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3', infoDiv);
+                console.log(`📊 [Promotion] Found ${lineDivs.length} line divs in this .info div`);
+                
+                lineDivs.forEach((lineDiv, lineIndex) => {
+                  try {
+                    // Find the number div (first div child)
+                    const numberDiv = safeQuerySelector('div', lineDiv);
+                    if (numberDiv) {
+                      const currentValue = safeTextContent(numberDiv);
+                      const lineText = safeTextContent(lineDiv);
+                      
+                      console.log(`📊 [Promotion] Line ${lineIndex + 1}: current value="${currentValue}", text="${lineText}"`);
+                      
+                      // Only update if current value is '0'
+                      if (currentValue === '0') {
+                        // Find matching key in mapping
+                        let matched = false;
+                        Object.entries(mapping).forEach(([key, value]) => {
+                          if (lineText.includes(key)) {
+                            console.log(`✅ [Promotion] Updating "${key}" from "${currentValue}" to "${value}"`);
+                            numberDiv.textContent = value;
+                            matched = true;
+                            totalUpdated++;
+                          }
+                        });
+                        
+                        if (!matched) {
+                          console.log(`⚠️ [Promotion] No mapping found for line: "${lineText}"`);
+                        }
+                      } else {
+                        console.log(`⏭️ [Promotion] Skipping line with non-zero value: "${currentValue}"`);
+                      }
+                    } else {
+                      console.log(`❌ [Promotion] No number div found in line ${lineIndex + 1}`);
+                    }
+                  } catch (e) {
+                    console.log(`❌ [Promotion] Error processing line ${lineIndex + 1}:`, e);
+                  }
+                });
+              } catch (e) {
+                console.log(`❌ [Promotion] Error processing .info div ${infoIndex + 1}:`, e);
+              }
+            });
+            
+            console.log(`🎯 [Promotion] Total values updated: ${totalUpdated}`);
+            return totalUpdated > 0;
+          } else {
+            console.log('❌ [Promotion] No .info_content container found');
+            
+            // Fallback: try to find .info divs directly
             const infoDivs = safeQuerySelectorAll('.info');
             if (infoDivs.length > 0) {
-              infoDivs.forEach(infoDiv => {
+              console.log(`🔄 [Promotion] Fallback: Found ${infoDivs.length} .info divs directly`);
+              
+              let totalUpdated = 0;
+              infoDivs.forEach((infoDiv, infoIndex) => {
                 try {
+                  const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
+                  const mapping = isTeamSection ? promotionData.team : promotionData.direct;
+                  
                   const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3', infoDiv);
                   lineDivs.forEach(lineDiv => {
                     try {
@@ -211,14 +402,11 @@ class _WebViewScreenState extends State<_WebViewScreen> {
                       if (numberDiv && safeTextContent(numberDiv) === '0') {
                         const textContent = safeTextContent(lineDiv);
                         
-                        // Determine if it's team section
-                        const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
-                        const mapping = isTeamSection ? valueMappings.team : valueMappings.direct;
-                        
-                        // Apply appropriate values
                         Object.entries(mapping).forEach(([key, value]) => {
                           if (textContent.includes(key)) {
+                            console.log(`✅ [Promotion] Fallback update: "${key}" to "${value}"`);
                             numberDiv.textContent = value;
+                            totalUpdated++;
                           }
                         });
                       }
@@ -230,269 +418,437 @@ class _WebViewScreenState extends State<_WebViewScreen> {
                   // Individual info div error - continue with others
                 }
               });
+              
+              console.log(`🎯 [Promotion] Fallback total values updated: ${totalUpdated}`);
+              return totalUpdated > 0;
             }
+          }
+          
+          return false;
+        }
+        
+        // -------------------------
+        // 3.1. Commission Data Update Function
+        // -------------------------
+        function updateCommissionData() {
+          console.log("🔄 [Commission] Starting commission data update...");
+          
+          // Look for .commission container
+          const commissionDiv = safeQuerySelector('.commission');
+          if (commissionDiv) {
+            console.log('✅ [Commission] Found .commission container');
             
-            // Phase 1.5: Handle Promotion Data
-            const commissionDiv = safeQuerySelector('.commission');
-            if (commissionDiv) {
+            // Get all .commission__body divs
+            const commissionBodyDivs = safeQuerySelectorAll('.commission__body', commissionDiv);
+            console.log(`📊 [Commission] Found ${commissionBodyDivs.length} .commission__body divs`);
+            
+            let totalUpdated = 0;
+            
+            commissionBodyDivs.forEach((bodyDiv, bodyIndex) => {
               try {
-                const commissionBodyDivs = safeQuerySelectorAll('.commission__body', commissionDiv);
-                commissionBodyDivs.forEach(bodyDiv => {
+                console.log(`🔄 [Commission] Processing .commission__body div ${bodyIndex + 1}...`);
+                
+                // Get all direct child divs within this body div (each div contains value-label pair)
+                const valueLabelDivs = safeQuerySelectorAll('div', bodyDiv);
+                console.log(`📊 [Commission] Found ${valueLabelDivs.length} value-label divs in body div ${bodyIndex + 1}`);
+                
+                valueLabelDivs.forEach((valueLabelDiv, divIndex) => {
                   try {
-                    const spans = safeQuerySelectorAll('span', bodyDiv);
-                    spans.forEach(span => {
-                      try {
-                        const spanText = safeTextContent(span);
-                        if (spanText === '0') {
-                          // Find the label span (the one with descriptive text)
-                          const labelSpan = Array.from(spans).find(s => 
-                            safeTextContent(s) !== '0' && 
-                            safeTextContent(s) !== '' &&
-                            !safeTextContent(s).match(/^\d+\.?\d*$/)
-                          );
-                          
-                          if (labelSpan) {
-                            const label = safeTextContent(labelSpan);
-                            // Apply promotion data values
-                            Object.entries(valueMappings.promotion).forEach(([key, value]) => {
-                              if (label.includes(key)) {
-                                span.textContent = value;
-                              }
-                            });
+                    console.log(`🔄 [Commission] Processing value-label div ${divIndex + 1}...`);
+                    
+                    // Get spans within this div
+                    const spans = safeQuerySelectorAll('span', valueLabelDiv);
+                    console.log(`📊 [Commission] Found ${spans.length} spans in value-label div ${divIndex + 1}`);
+                    
+                    if (spans.length >= 2) {
+                      const valueSpan = spans[0]; // First span is the value
+                      const labelSpan = spans[1]; // Second span is the label
+                      
+                      const valueText = safeTextContent(valueSpan);
+                      const labelText = safeTextContent(labelSpan);
+                      
+                      console.log(`📊 [Commission] Value: "${valueText}", Label: "${labelText}"`);
+                      
+                      // Check if this span contains "0" (the value to update)
+                      if (valueText === '0') {
+                        console.log(`📋 [Commission] Found value "0" with label: "${labelText}"`);
+                        
+                        // Apply commission data values
+                        Object.entries(promotionData.commission).forEach(([key, value]) => {
+                          if (labelText.includes(key)) {
+                            console.log(`✅ [Commission] Updating "${key}" from "0" to "${value}"`);
+                            valueSpan.textContent = value;
+                            totalUpdated++;
                           }
-                        }
-                      } catch (e) {
-                        // Individual span error - continue with others
+                        });
+                      } else {
+                        console.log(`⏭️ [Commission] Skipping non-zero value: "${valueText}"`);
                       }
-                    });
+                    } else {
+                      console.log(`⚠️ [Commission] Not enough spans in value-label div ${divIndex + 1}`);
+                    }
                   } catch (e) {
-                    // Individual body div error - continue with others
+                    console.log(`❌ [Commission] Error processing value-label div ${divIndex + 1}:`, e);
                   }
                 });
               } catch (e) {
-                // Promotion data error - continue
+                console.log(`❌ [Commission] Error processing body div ${bodyIndex + 1}:`, e);
+              }
+            });
+            
+            console.log(`🎯 [Commission] Total values updated: ${totalUpdated}`);
+            return totalUpdated > 0;
+          } else {
+            console.log('❌ [Commission] No .commission container found');
+            return false;
+          }
+        }
+        
+        // -------------------------
+        // 4. Complete DOM Analysis and Value Update Function
+        // -------------------------
+        function updateTeamReport(dateText) {
+          console.log("🔍 [updateTeamReport] ===== STARTING UPDATE =====");
+          console.log("🔍 [updateTeamReport] Date:", dateText);
+          console.log("🔍 [updateTeamReport] Available dates:", Object.keys(dateData));
+
+          const values = dateData[dateText];
+          if (!values) {
+            console.warn("⚠️ [updateTeamReport] No values mapped for this date:", dateText);
+            return;
+          }
+
+          console.log("✅ [updateTeamReport] Values to update:", values);
+
+          let updatedCount = 0;
+          
+          // Expected order based on the HTML structure: Deposit number, Deposit amount, Number of bettors, Total bet, Number of people making first deposit, First deposit amount
+          const expectedOrder = [
+            "Deposit number",
+            "Deposit amount", 
+            "Number of bettors",
+            "Total bet",
+            "Number of people making first deposit",
+            "First deposit amount"
+          ];
+
+          // Method 1: Direct .num elements update - ONLY update pure numeric values
+          console.log("🔍 [updateTeamReport] === METHOD 1: Direct .num elements ===");
+          const numElements = document.querySelectorAll('.num');
+          console.log(`🔍 [updateTeamReport] Found ${numElements.length} .num elements:`, Array.from(numElements).map(el => el.textContent.trim()));
+          
+          numElements.forEach((element, index) => {
+            if (index < expectedOrder.length) {
+              const label = expectedOrder[index];
+              const newValue = values[label];
+              if (newValue) {
+                const oldValue = element.textContent.trim();
+                
+                // CRITICAL: Only update if it's a pure number (no text labels)
+                if (element.classList.contains('num') && /^\d+$/.test(oldValue)) {
+                  console.log(`🔄 [updateTeamReport] Updating .num[${index}] (${label}) from "${oldValue}" to "${newValue}"`);
+                  element.textContent = newValue;
+                  updatedCount++;
+                } else {
+                  console.log(`⚠️ [updateTeamReport] Skipping .num[${index}] - contains text/labels: "${oldValue}"`);
+                }
               }
             }
+          });
+
+          // Method 2: Header-container specific approach - ONLY update pure numeric values
+          if (updatedCount === 0) {
+            console.log("🔍 [updateTeamReport] === METHOD 2: Header-container approach ===");
             
-                         // Phase 2: Handle Team Report page
-             const headerContainer = safeQuerySelector('.header-container');
-             if (headerContainer) {
-               try {
-                 // Get current date with multiple selectors for better detection
-                 let dateSpan = safeQuerySelector('span.default');
-                 if (!dateSpan) {
-                   // Try alternative selectors
-                   dateSpan = safeQuerySelector('[data-v-10d1559c].default');
-                   if (!dateSpan) {
-                     dateSpan = safeQuerySelector('span[class*="default"]');
-                   }
-                 }
-                 
-                 let selectedDate = '2025-08-26';
-                 
-                 if (dateSpan) {
-                   const dateText = safeTextContent(dateSpan);
-                   console.log('Found date:', dateText);
-                   
-                   if (dateText && valueMappings.dates[dateText]) {
-                     selectedDate = dateText;
-                     console.log('Using date:', selectedDate);
-                   } else {
-                     console.log('Date not found in mappings, using default');
-                   }
-                 } else {
-                   console.log('No date span found');
-                 }
-                 
-                 const currentValues = valueMappings.dates[selectedDate] || valueMappings.dates['2025-08-26'];
-                 console.log('Current values for date', selectedDate, ':', currentValues);
-                 
-                 // Replace header values more aggressively
-                 const numDivs = safeQuerySelectorAll('.num', headerContainer);
-                 console.log('Found', numDivs.length, 'num divs');
-                 
-                 numDivs.forEach((numDiv, index) => {
-                   try {
-                     const currentText = safeTextContent(numDiv);
-                     console.log('Num div', index, 'current text:', currentText);
-                     
-                     if (currentText === '0' || currentText === '') {
-                       const parentDiv = numDiv.parentElement;
-                       if (parentDiv) {
-                         const textContent = safeTextContent(parentDiv);
-                         console.log('Parent text:', textContent);
-                         
-                         // More specific matching
-                         let matched = false;
-                         Object.entries(currentValues).forEach(([key, value]) => {
-                           if (textContent.includes(key)) {
-                             numDiv.textContent = value;
-                             console.log('Updated', key, 'to', value);
-                             matched = true;
-                           }
-                         });
-                         
-                         if (!matched) {
-                           // Fallback: try to match by position/index
-                           const keys = Object.keys(currentValues);
-                           if (index < keys.length) {
-                             const key = keys[index];
-                             const value = currentValues[key];
-                             numDiv.textContent = value;
-                             console.log('Fallback update by index', index, ':', key, '=', value);
-                           }
-                         }
-                       }
-                     }
-                   } catch (e) {
-                     console.log('Error updating num div', index, ':', e);
-                   }
-                 });
-                 
-                 // Update last known date
-                 lastDate = selectedDate;
-                 
-               } catch (e) {
-                 console.log('Team Report error:', e);
-               }
-             }
-            
-            // Phase 3: Aggressive fallback replacement
-            try {
-              const allZeroDivs = safeQuerySelectorAll('div');
-              allZeroDivs.forEach(div => {
-                try {
-                  if (safeTextContent(div) === '0') {
-                    const parentText = safeTextContent(div.parentElement);
-                    if (parentText) {
-                      // Apply fallback values based on context
-                      if (parentText.includes('number of register')) {
-                        div.textContent = '25';
-                      } else if (parentText.includes('Deposit number')) {
-                        div.textContent = '18';
-                      } else if (parentText.includes('Deposit amount')) {
-                        div.textContent = '15000';
-                      } else if (parentText.includes('Number of people making first deposit')) {
-                        div.textContent = '12';
-                      }
+            const headerContainer = document.querySelector('.header-container');
+            if (headerContainer) {
+              console.log("🔍 [updateTeamReport] Found header-container, looking for .num elements within...");
+              
+              const containerNumElements = headerContainer.querySelectorAll('.num');
+              console.log(`🔍 [updateTeamReport] Found ${containerNumElements.length} .num elements in header-container`);
+              
+              containerNumElements.forEach((element, index) => {
+                if (index < expectedOrder.length) {
+                  const label = expectedOrder[index];
+                  const newValue = values[label];
+                  if (newValue) {
+                    const oldValue = element.textContent.trim();
+                    
+                    // CRITICAL: Only update if it's a pure number (no text labels)
+                    if (/^\d+$/.test(oldValue)) {
+                      console.log(`🔄 [updateTeamReport] Updating header-container .num[${index}] (${label}) from "${oldValue}" to "${newValue}"`);
+                      element.textContent = newValue;
+                      updatedCount++;
+                    } else {
+                      console.log(`⚠️ [updateTeamReport] Skipping header-container .num[${index}] - contains text/labels: "${oldValue}"`);
                     }
                   }
-                } catch (e) {
-                  // Individual div error - continue with others
                 }
               });
-            } catch (e) {
-              // Fallback phase error - continue
+            } else {
+              console.log("❌ [updateTeamReport] No header-container found");
             }
-            
-            // Mark as initialized
-            isInitialized = true;
-            retryCount = 0;
-            
-          } catch (error) {
-            console.log('Replace values error:', error);
-            retryCount++;
-          } finally {
-            isRunning = false;
           }
-        }
-        
-        // Smart initialization
-        function initialize() {
-          if (isInitialized && retryCount === 0) return;
-          
-          const body = safeQuerySelector('body');
-          if (body) {
-            replaceValues();
-          } else if (retryCount < maxRetries) {
-            retryCount++;
-            setTimeout(initialize, 500);
+
+          // Method 3: If still no updates, try alternative selectors for pure numeric elements
+          if (updatedCount === 0) {
+            console.log("🔍 [updateTeamReport] === METHOD 3: Alternative numeric selectors ===");
+            
+            // Try to find elements that contain only numbers (no text labels)
+            const numericSelectors = [
+              '.num',
+              '[class*="num"]',
+              'div[class*="value"]',
+              'span[class*="value"]',
+              'div[class*="data"]',
+              'span[class*="data"]'
+            ];
+            
+            for (const selector of numericSelectors) {
+              const elements = document.querySelectorAll(selector);
+              console.log(`🔍 [updateTeamReport] Checking selector "${selector}": found ${elements.length} elements`);
+              
+              elements.forEach((element, index) => {
+                const text = element.textContent.trim();
+                
+                // CRITICAL: Only update if it's a pure number (no text labels)
+                if (/^\d+$/.test(text) && index < expectedOrder.length) {
+                  const label = expectedOrder[index];
+                  const newValue = values[label];
+                  if (newValue) {
+                    console.log(`🔄 [updateTeamReport] Updating ${selector}[${index}] (${label}) from "${text}" to "${newValue}"`);
+                    element.textContent = newValue;
+                    updatedCount++;
+                  }
+                } else {
+                  console.log(`⚠️ [updateTeamReport] Skipping ${selector}[${index}] - contains text/labels: "${text}"`);
+                }
+              });
+              
+              if (updatedCount > 0) break; // Stop if we found and updated elements
+            }
           }
-        }
-        
-                 // Enhanced monitoring
-         function startMonitoring() {
-           // Initial run
-           setTimeout(initialize, 500);
-           
-           // Periodic refresh
-           setInterval(() => {
-             if (!isRunning) {
-               replaceValues();
-             }
-           }, 1500);
-           
-           // Force refresh when URL changes (for navigation)
-           let lastUrl = window.location.href;
-           setInterval(() => {
-             if (window.location.href !== lastUrl) {
-               lastUrl = window.location.href;
-               console.log('URL changed, forcing refresh');
-               setTimeout(replaceValues, 200);
-             }
-           }, 300);
-          
-                     // Date change monitoring - more aggressive
-           setInterval(() => {
-             try {
-               let dateSpan = safeQuerySelector('span.default');
-               if (!dateSpan) {
-                 dateSpan = safeQuerySelector('[data-v-10d1559c].default');
-                 if (!dateSpan) {
-                   dateSpan = safeQuerySelector('span[class*="default"]');
-                 }
-               }
-               
-               if (dateSpan) {
-                 const currentDate = safeTextContent(dateSpan);
-                 if (currentDate && currentDate !== lastDate) {
-                   lastDate = currentDate;
-                   console.log('Date changed to:', currentDate);
-                   // Immediate update for date changes
-                   setTimeout(replaceValues, 50);
-                 }
-               }
-             } catch (e) {
-               // Date monitoring error - continue
-             }
-           }, 500); // Check more frequently
-          
-          // DOM change monitoring
-          try {
-            const observer = new MutationObserver((mutations) => {
-              if (!isRunning && mutations.some(m => m.type === 'childList')) {
-                setTimeout(replaceValues, 200);
+
+          // Method 4: Final fallback - search for any element with pure numeric content
+          if (updatedCount === 0) {
+            console.log("🔍 [updateTeamReport] === METHOD 4: Pure numeric content search ===");
+            
+            // Find all elements that contain only numbers
+            const allElements = document.querySelectorAll('*');
+            const numericElements = [];
+            
+            allElements.forEach(element => {
+              const text = element.textContent.trim();
+              // Only consider elements with pure numeric content (no text labels)
+              if (/^\d+$/.test(text) && text.length > 0 && text.length < 10) {
+                numericElements.push(element);
               }
             });
             
-            observer.observe(document.body, {
-              childList: true,
-              subtree: true,
-              childList: true
+            console.log(`🔍 [updateTeamReport] Found ${numericElements.length} elements with pure numeric content`);
+            
+            // Update the first 6 numeric elements we find (assuming they're our data)
+            numericElements.slice(0, 6).forEach((element, index) => {
+              if (index < expectedOrder.length) {
+                const label = expectedOrder[index];
+                const newValue = values[label];
+                if (newValue) {
+                  const oldValue = element.textContent.trim();
+                  console.log(`🔄 [updateTeamReport] Updating numeric element[${index}] (${label}) from "${oldValue}" to "${newValue}"`);
+                  element.textContent = newValue;
+                  updatedCount++;
+                }
+              }
             });
-          } catch (e) {
-            // Observer error - fallback to interval
           }
-        }
-        
-        // Start the system
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', startMonitoring);
-        } else {
-          startMonitoring();
-        }
-        
-        // Fallback for late loading
-        window.addEventListener('load', () => {
-          if (!isInitialized) {
-            setTimeout(initialize, 1000);
-          }
-        });
-        
-      })();
-    ''';
 
-    _controller.runJavaScript(script);
+          console.log(`🎯 [updateTeamReport] ===== FINAL RESULT: ${updatedCount} values updated =====`);
+          
+          if (updatedCount === 0) {
+            console.log("❌ [updateTeamReport] No values were updated. Running debug...");
+            debugDOM();
+          } else {
+            console.log(`✅ [updateTeamReport] Successfully updated ${updatedCount} values!`);
+          }
+        }
+
+        // -------------------------
+        // 4. Enhanced Date Watcher
+        // -------------------------
+        function startDateWatcher() {
+          console.log("👀 [Watcher] Starting date watcher...");
+          
+          // Try multiple selectors for the date span - updated with correct structure
+          const dateSelectors = [
+            '.TeamReport__C-head-line2 div[data-v-10d1559c]:nth-child(2) span.default[data-v-10d1559c]',  // Second div (date) not first (All)
+            '.TeamReport__C-head-line2 span.default[data-v-10d1559c]:nth-child(2)',                      // Second span in the container
+            'div[data-v-10d1559c] span.default[data-v-10d1559c]',  // Any span with the structure
+            'span.default[data-v-10d1559c]',                      // Span with both classes and data attribute
+            'span.default',                                        // Original selector
+            '.TeamReport__C-head-line2 span.default',
+            '[class*="date"]',
+            '[class*="Date"]',
+            'span[class*="head"]',
+            'span'
+          ];
+
+          let dateSpan = null;
+          for (const selector of dateSelectors) {
+            const foundSpan = document.querySelector(selector);
+            if (foundSpan && foundSpan.textContent.trim()) {
+              const text = foundSpan.textContent.trim();
+              // Make sure it's not "All" and looks like a date
+              if (text !== "All" && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                dateSpan = foundSpan;
+                console.log(`✅ [Watcher] Found date span with selector: ${selector}`);
+                console.log(`📅 [Watcher] Date span content: "${text}"`);
+                console.log(`📅 [Watcher] Date span classes: "${dateSpan.className}"`);
+                console.log(`📅 [Watcher] Date span attributes:`, dateSpan.attributes);
+                break;
+              } else {
+                console.log(`⚠️ [Watcher] Found span but not a date: "${text}"`);
+              }
+            }
+          }
+
+          if (!dateSpan) {
+            console.warn("⚠️ [Watcher] Date span not found. Retrying in 2s...");
+            // Debug: show all spans with data-v-10d1559c
+            const allSpans = document.querySelectorAll('span[data-v-10d1559c]');
+            console.log(`🔍 [Debug] Found ${allSpans.length} spans with data-v-10d1559c:`);
+            allSpans.forEach((span, i) => {
+              console.log(`  ${i}: "${span.textContent.trim()}" - classes: "${span.className}"`);
+            });
+            setTimeout(startDateWatcher, 2000);
+            return;
+          }
+
+          const currentDate = dateSpan.textContent.trim();
+          console.log("👀 [Watcher] Watching date span:", currentDate);
+
+          // Run once immediately
+          updateTeamReport(currentDate);
+
+          // Setup observer
+          const observer = new MutationObserver(mutations => {
+            mutations.forEach(m => {
+              if (m.type === "characterData" || m.type === "childList") {
+                const newDate = dateSpan.textContent.trim();
+                if (newDate !== currentDate) {
+                  console.log("📅 [Watcher] Date changed to:", newDate);
+                  updateTeamReport(newDate);
+                }
+              }
+            });
+          });
+
+          observer.observe(dateSpan, {
+            characterData: true,
+            childList: true,
+            subtree: true
+          });
+
+          // Also observe the parent container for changes
+          if (dateSpan.parentElement) {
+            observer.observe(dateSpan.parentElement, {
+              childList: true,
+              subtree: true
+            });
+          }
+        }
+
+        // -------------------------
+        // 5. Start Monitoring with Retry Logic
+        // -------------------------
+        function initializeScript() {
+          console.log("🚀 [Init] Initializing script...");
+          
+          // Detect current page type
+          const currentPage = detectCurrentPage();
+          
+          // Wait a bit for the page to fully load
+          setTimeout(() => {
+            if (currentPage === 'TeamReport') {
+              console.log("🔄 [Init] Initializing Team Report page...");
+            startDateWatcher();
+            
+            // Test immediate date detection
+            setTimeout(() => {
+              console.log("🔄 [Init] Testing immediate date detection...");
+              console.log("🔄 [Init] Looking for TeamReport__C-head-line2 container...");
+              
+              const container = document.querySelector('.TeamReport__C-head-line2');
+              if (container) {
+                console.log("✅ [Init] Found TeamReport__C-head-line2 container");
+                console.log("📋 [Init] Container HTML:", container.outerHTML);
+                
+                // Try the specific selector first - target the second div (date) not first (All)
+                const specificDateSpan = document.querySelector('.TeamReport__C-head-line2 div[data-v-10d1559c]:nth-child(2) span.default[data-v-10d1559c]');
+                if (specificDateSpan) {
+                  const text = specificDateSpan.textContent.trim();
+                  console.log("📅 [Init] Found date span with specific selector:", text);
+                  updateTeamReport(text);
+                } else {
+                  console.log("❌ [Init] Specific selector failed, trying fallback...");
+                  // Fallback to checking all spans
+                  const dateSpans = document.querySelectorAll('span');
+                  dateSpans.forEach(span => {
+                    const text = span.textContent.trim();
+                    if (text !== "All" && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                      console.log("📅 [Init] Found date span:", text);
+                      updateTeamReport(text);
+                    }
+                  });
+                }
+              } else {
+                console.log("❌ [Init] TeamReport__C-head-line2 container not found");
+                console.log("🔍 [Init] Available elements with data-v-10d1559c:");
+                const elements = document.querySelectorAll('[data-v-10d1559c]');
+                elements.forEach((el, index) => {
+                  console.log(`  ${index}: ${el.tagName} - ${el.className} - "${el.textContent.trim()}"`);
+                });
+              }
+            }, 2000);
+            } else if (currentPage === 'Promotion') {
+              console.log("🔄 [Init] Initializing Promotion page...");
+              
+              // Test immediate promotion data update
+              setTimeout(() => {
+                console.log("🔄 [Init] Testing immediate promotion data update...");
+                const promotionSuccess = updatePromotionData();
+                if (promotionSuccess) {
+                  console.log("✅ [Init] Promotion data updated successfully");
+                } else {
+                  console.log("⚠️ [Init] No promotion data was updated");
+                }
+                
+                // Also update commission data
+                console.log("🔄 [Init] Testing immediate commission data update...");
+                const commissionSuccess = updateCommissionData();
+                if (commissionSuccess) {
+                  console.log("✅ [Init] Commission data updated successfully");
+                } else {
+                  console.log("⚠️ [Init] No commission data was updated");
+                }
+              }, 1000);
+            } else {
+              console.log("🔄 [Init] Other page detected, no specific initialization needed");
+            }
+          }, 1000);
+        }
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", initializeScript);
+        } else {
+          initializeScript();
+        }
+
+        console.log("✅ [Injector] Script setup complete");
+      })();
+    """;
+
+    await _controller.runJavaScript(jsScript);
+    print("🎯 Enhanced script successfully injected into WebView");
   }
 
   @override
