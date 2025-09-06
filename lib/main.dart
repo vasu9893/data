@@ -107,7 +107,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             "Deposit amount": "55500",
             "Number of bettors": "94",
             "Total bet": "242000",
-            "Number of people making first deposit": "37",
+            "Number of people making first deposit": "47",
             "First deposit amount": "33500"
           },
           "2025-09-03": {
@@ -417,6 +417,17 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         function updatePromotionInContainer(container) {
           let totalUpdated = 0;
           
+          // Update specific amount element with data-v-6cf5705a
+          const amountElement = document.querySelector('div[data-v-6cf5705a].amount');
+          if (amountElement) {
+            const currentValue = amountElement.textContent.trim();
+            if (currentValue === '0' || parseInt(currentValue) < 1000) {
+              console.log(`✅ [Promotion] Updating amount element from "${currentValue}" to "809"`);
+              amountElement.textContent = '809';
+              totalUpdated++;
+            }
+          }
+          
           // Get all .info divs within container
           const infoDivs = safeQuerySelectorAll('.info', container);
           console.log(`📊 [Promotion] Found ${infoDivs.length} .info divs in container`);
@@ -484,6 +495,17 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         function updatePromotionInDivs(divs) {
           let totalUpdated = 0;
           
+          // Update specific amount element with data-v-6cf5705a
+          const amountElement = document.querySelector('div[data-v-6cf5705a].amount');
+          if (amountElement) {
+            const currentValue = amountElement.textContent.trim();
+            if (currentValue === '0' || parseInt(currentValue) < 1000) {
+              console.log(`✅ [Promotion] Updating amount element from "${currentValue}" to "809"`);
+              amountElement.textContent = '809';
+              totalUpdated++;
+            }
+          }
+          
           divs.forEach((infoDiv, infoIndex) => {
             try {
               const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
@@ -523,6 +545,21 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         function forceUpdatePromotionData() {
           console.log("🔍 [Promotion] Force updating promotion data...");
           let totalUpdated = 0;
+          
+          // Update specific amount element with data-v-6cf5705a
+          const amountElement = document.querySelector('div[data-v-6cf5705a].amount');
+          if (amountElement) {
+            const currentValue = amountElement.textContent.trim();
+            if (currentValue === '0' || parseInt(currentValue) < 1000) {
+              console.log(`✅ [Promotion] Updating amount element from "${currentValue}" to "809"`);
+              amountElement.textContent = '809';
+              totalUpdated++;
+            } else {
+              console.log(`⏭️ [Promotion] Amount element already has value: "${currentValue}"`);
+            }
+          } else {
+            console.log("⚠️ [Promotion] Amount element with data-v-6cf5705a not found");
+          }
           
           // Find all elements that might contain promotion data
           const allElements = document.querySelectorAll('*');
@@ -987,6 +1024,13 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
               if (hasCommissionZeros) {
                 needsUpdate = true;
                 console.log("🔄 [Monitor] Found commission values needing update");
+              }
+              
+              // Check for specific amount element
+              const amountElement = document.querySelector('div[data-v-6cf5705a].amount');
+              if (amountElement && (amountElement.textContent.trim() === '0' || parseInt(amountElement.textContent.trim()) < 1000)) {
+                needsUpdate = true;
+                console.log("🔄 [Monitor] Found amount element needing update");
               }
               
               if (needsUpdate) {
