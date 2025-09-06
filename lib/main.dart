@@ -67,28 +67,28 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         // 1. Data Mappings
         // -------------------------
         
-        // Promotion page data mappings
+        // Promotion page data mappings (using 2025-09-05 data)
         const promotionData = {
-          // Direct subordinates
+          // Direct subordinates (using 2025-09-05 values)
           'direct': {
-            'number of register': '52',
-            'Deposit number': '52',
-            'Deposit amount': '26632',
-            'Number of people making first deposit': '13'
+            'number of register': '79',
+            'Deposit number': '79',
+            'Deposit amount': '56200',
+            'Number of people making first deposit': '38'
           },
-          // Team subordinates
+          // Team subordinates (using 2025-09-05 values)
           'team': {
-            'number of register': '2',
-            'Deposit number': '1',
-            'Deposit amount': '2100',
-            'Number of people making first deposit': '1'
+            'number of register': '4',
+            'Deposit number': '2',
+            'Deposit amount': '450',
+            'Number of people making first deposit': '2'
           },
-          // Commission/Promotion data
+          // Commission/Promotion data (using 2025-09-05 values)
           'commission': {
-            'This Week': '251.58',
-            'Total commission': '11464.89',
-            'direct subordinate': '2465',
-            'Total number of subordinates in the team': '145'
+            'This Week': '562.00',
+            'Total commission': '56200.00',
+            'direct subordinate': '79',
+            'Total number of subordinates in the team': '95'
           }
         };
         
