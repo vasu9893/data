@@ -330,125 +330,246 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         }
 
         // -------------------------
-        // 3. Promotion Page Data Update Function
+        // 3. Enhanced Promotion Page Data Update Function
         // -------------------------
         function updatePromotionData() {
-          console.log("🔄 [Promotion] Starting promotion data update...");
+          console.log("🔄 [Promotion] Starting enhanced promotion data update...");
           
-          // Look for .info_content container first
-          const infoContentDiv = safeQuerySelector('.info_content');
-          if (infoContentDiv) {
-            console.log('✅ [Promotion] Found .info_content container');
-            
-            // Get all .info divs within .info_content
-            const infoDivs = safeQuerySelectorAll('.info', infoContentDiv);
-            console.log(`📊 [Promotion] Found ${infoDivs.length} .info divs in .info_content`);
-            
-            let totalUpdated = 0;
-            
-            infoDivs.forEach((infoDiv, infoIndex) => {
-              try {
-                console.log(`🔄 [Promotion] Processing .info div ${infoIndex + 1}...`);
-                
-                // Check if this is team section (has .head.u2 class)
-                const headDiv = safeQuerySelector('.head', infoDiv);
-                const isTeamSection = headDiv && headDiv.classList.contains('u2');
-                const mapping = isTeamSection ? promotionData.team : promotionData.direct;
-                
-                console.log(`📋 [Promotion] Section type: ${isTeamSection ? 'Team subordinates' : 'Direct subordinates'}`);
-                console.log(`📋 [Promotion] Using mapping:`, mapping);
-                
-                // Get all line divs (line1, line2, line3)
-                const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3', infoDiv);
-                console.log(`📊 [Promotion] Found ${lineDivs.length} line divs in this .info div`);
-                
-                lineDivs.forEach((lineDiv, lineIndex) => {
-                  try {
-                    // Find the number div (first div child)
-                    const numberDiv = safeQuerySelector('div', lineDiv);
-                    if (numberDiv) {
-                      const currentValue = safeTextContent(numberDiv);
-                      const lineText = safeTextContent(lineDiv);
-                      
-                      console.log(`📊 [Promotion] Line ${lineIndex + 1}: current value="${currentValue}", text="${lineText}"`);
-                      
-                      // Only update if current value is '0'
-                      if (currentValue === '0') {
-                        // Find matching key in mapping
-                        let matched = false;
-                        Object.entries(mapping).forEach(([key, value]) => {
-                          if (lineText.includes(key)) {
-                            console.log(`✅ [Promotion] Updating "${key}" from "${currentValue}" to "${value}"`);
-                            numberDiv.textContent = value;
-                            matched = true;
-                            totalUpdated++;
-                          }
-                        });
-                        
-                        if (!matched) {
-                          console.log(`⚠️ [Promotion] No mapping found for line: "${lineText}"`);
-                        }
-                      } else {
-                        console.log(`⏭️ [Promotion] Skipping line with non-zero value: "${currentValue}"`);
-                      }
-                    } else {
-                      console.log(`❌ [Promotion] No number div found in line ${lineIndex + 1}`);
-                    }
-                  } catch (e) {
-                    console.log(`❌ [Promotion] Error processing line ${lineIndex + 1}:`, e);
-                  }
-                });
-              } catch (e) {
-                console.log(`❌ [Promotion] Error processing .info div ${infoIndex + 1}:`, e);
+          let totalUpdated = 0;
+          let attempts = 0;
+          const maxAttempts = 3;
+          
+          // Multiple strategies to find and update promotion data
+          const strategies = [
+            // Strategy 1: .info_content container
+            () => {
+              console.log("🔍 [Promotion] Strategy 1: .info_content container");
+              const infoContentDiv = safeQuerySelector('.info_content');
+              if (infoContentDiv) {
+                console.log('✅ [Promotion] Found .info_content container');
+                return updatePromotionInContainer(infoContentDiv);
               }
-            });
+              return 0;
+            },
             
-            console.log(`🎯 [Promotion] Total values updated: ${totalUpdated}`);
-            return totalUpdated > 0;
-          } else {
-            console.log('❌ [Promotion] No .info_content container found');
+            // Strategy 2: Direct .info divs
+            () => {
+              console.log("🔍 [Promotion] Strategy 2: Direct .info divs");
+              const infoDivs = safeQuerySelectorAll('.info');
+              if (infoDivs.length > 0) {
+                console.log(`🔄 [Promotion] Found ${infoDivs.length} .info divs directly`);
+                return updatePromotionInDivs(infoDivs);
+              }
+              return 0;
+            },
             
-            // Fallback: try to find .info divs directly
-            const infoDivs = safeQuerySelectorAll('.info');
-            if (infoDivs.length > 0) {
-              console.log(`🔄 [Promotion] Fallback: Found ${infoDivs.length} .info divs directly`);
+            // Strategy 3: Alternative selectors
+            () => {
+              console.log("🔍 [Promotion] Strategy 3: Alternative selectors");
+              const alternativeSelectors = [
+                '[class*="info"]',
+                '[class*="promotion"]',
+                '[class*="data"]',
+                'div[class*="item"]',
+                'div[class*="line"]'
+              ];
               
-              let totalUpdated = 0;
-              infoDivs.forEach((infoDiv, infoIndex) => {
-                try {
-                  const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
-                  const mapping = isTeamSection ? promotionData.team : promotionData.direct;
-                  
-                  const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3', infoDiv);
-                  lineDivs.forEach(lineDiv => {
-                    try {
-                      const numberDiv = safeQuerySelector('div', lineDiv);
-                      if (numberDiv && safeTextContent(numberDiv) === '0') {
-                        const textContent = safeTextContent(lineDiv);
-                        
-                        Object.entries(mapping).forEach(([key, value]) => {
-                          if (textContent.includes(key)) {
-                            console.log(`✅ [Promotion] Fallback update: "${key}" to "${value}"`);
-                            numberDiv.textContent = value;
-                            totalUpdated++;
-                          }
-                        });
-                      }
-                    } catch (e) {
-                      // Individual line error - continue with others
-                    }
-                  });
-                } catch (e) {
-                  // Individual info div error - continue with others
+              for (const selector of alternativeSelectors) {
+                const elements = safeQuerySelectorAll(selector);
+                if (elements.length > 0) {
+                  console.log(`🔄 [Promotion] Found ${elements.length} elements with selector: ${selector}`);
+                  const updated = updatePromotionInDivs(elements);
+                  if (updated > 0) return updated;
                 }
-              });
-              
-              console.log(`🎯 [Promotion] Fallback total values updated: ${totalUpdated}`);
-              return totalUpdated > 0;
+              }
+              return 0;
+            },
+            
+            // Strategy 4: Force update by finding numeric elements
+            () => {
+              console.log("🔍 [Promotion] Strategy 4: Force update numeric elements");
+              return forceUpdatePromotionData();
             }
+          ];
+          
+          // Try each strategy until we get results
+          for (let i = 0; i < strategies.length; i++) {
+            attempts++;
+            console.log(`🔄 [Promotion] Attempt ${attempts}/${maxAttempts}: Strategy ${i + 1}`);
+            
+            const updated = strategies[i]();
+            totalUpdated += updated;
+            
+            if (updated > 0) {
+              console.log(`✅ [Promotion] Strategy ${i + 1} successful: ${updated} values updated`);
+              break;
+            } else {
+              console.log(`⚠️ [Promotion] Strategy ${i + 1} failed, trying next...`);
+            }
+            
+            if (attempts >= maxAttempts) break;
           }
           
-          return false;
+          console.log(`🎯 [Promotion] Total values updated: ${totalUpdated}`);
+          return totalUpdated > 0;
+        }
+        
+        function updatePromotionInContainer(container) {
+          let totalUpdated = 0;
+          
+          // Get all .info divs within container
+          const infoDivs = safeQuerySelectorAll('.info', container);
+          console.log(`📊 [Promotion] Found ${infoDivs.length} .info divs in container`);
+          
+          infoDivs.forEach((infoDiv, infoIndex) => {
+            try {
+              console.log(`🔄 [Promotion] Processing .info div ${infoIndex + 1}...`);
+              
+              // Check if this is team section (has .head.u2 class)
+              const headDiv = safeQuerySelector('.head', infoDiv);
+              const isTeamSection = headDiv && headDiv.classList.contains('u2');
+              const mapping = isTeamSection ? promotionData.team : promotionData.direct;
+              
+              console.log(`📋 [Promotion] Section type: ${isTeamSection ? 'Team subordinates' : 'Direct subordinates'}`);
+              console.log(`📋 [Promotion] Using mapping:`, mapping);
+              
+              // Get all line divs (line1, line2, line3, line4, etc.)
+              const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3, .line4, .line5', infoDiv);
+              console.log(`📊 [Promotion] Found ${lineDivs.length} line divs in this .info div`);
+              
+              lineDivs.forEach((lineDiv, lineIndex) => {
+                try {
+                  // Find the number div (first div child)
+                  const numberDiv = safeQuerySelector('div', lineDiv);
+                  if (numberDiv) {
+                    const currentValue = safeTextContent(numberDiv);
+                    const lineText = safeTextContent(lineDiv);
+                    
+                    console.log(`📊 [Promotion] Line ${lineIndex + 1}: current value="${currentValue}", text="${lineText}"`);
+                    
+                    // Update if current value is '0' OR if it's a small number (likely real data)
+                    if (currentValue === '0' || (parseInt(currentValue) < 10 && parseInt(currentValue) >= 0)) {
+                      // Find matching key in mapping
+                      let matched = false;
+                      Object.entries(mapping).forEach(([key, value]) => {
+                        if (lineText.includes(key)) {
+                          console.log(`✅ [Promotion] Updating "${key}" from "${currentValue}" to "${value}"`);
+                          numberDiv.textContent = value;
+                          matched = true;
+                          totalUpdated++;
+                        }
+                      });
+                      
+                      if (!matched) {
+                        console.log(`⚠️ [Promotion] No mapping found for line: "${lineText}"`);
+                      }
+                    } else {
+                      console.log(`⏭️ [Promotion] Skipping line with value: "${currentValue}"`);
+                    }
+                  } else {
+                    console.log(`❌ [Promotion] No number div found in line ${lineIndex + 1}`);
+                  }
+                } catch (e) {
+                  console.log(`❌ [Promotion] Error processing line ${lineIndex + 1}:`, e);
+                }
+              });
+            } catch (e) {
+              console.log(`❌ [Promotion] Error processing .info div ${infoIndex + 1}:`, e);
+            }
+          });
+          
+          return totalUpdated;
+        }
+        
+        function updatePromotionInDivs(divs) {
+          let totalUpdated = 0;
+          
+          divs.forEach((infoDiv, infoIndex) => {
+            try {
+              const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
+              const mapping = isTeamSection ? promotionData.team : promotionData.direct;
+              
+              const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3, .line4, .line5', infoDiv);
+              lineDivs.forEach(lineDiv => {
+                try {
+                  const numberDiv = safeQuerySelector('div', lineDiv);
+                  if (numberDiv) {
+                    const currentValue = safeTextContent(numberDiv);
+                    const textContent = safeTextContent(lineDiv);
+                    
+                    // Update if current value is '0' OR if it's a small number
+                    if (currentValue === '0' || (parseInt(currentValue) < 10 && parseInt(currentValue) >= 0)) {
+                      Object.entries(mapping).forEach(([key, value]) => {
+                        if (textContent.includes(key)) {
+                          console.log(`✅ [Promotion] Direct update: "${key}" from "${currentValue}" to "${value}"`);
+                          numberDiv.textContent = value;
+                          totalUpdated++;
+                        }
+                      });
+                    }
+                  }
+                } catch (e) {
+                  // Individual line error - continue with others
+                }
+              });
+            } catch (e) {
+              // Individual info div error - continue with others
+            }
+          });
+          
+          return totalUpdated;
+        }
+        
+        function forceUpdatePromotionData() {
+          console.log("🔍 [Promotion] Force updating promotion data...");
+          let totalUpdated = 0;
+          
+          // Find all elements that might contain promotion data
+          const allElements = document.querySelectorAll('*');
+          const numericElements = [];
+          
+          allElements.forEach(element => {
+            const text = element.textContent.trim();
+            // Look for elements with small numbers (likely real data to replace)
+            if (/^\d+$/.test(text) && parseInt(text) < 100 && parseInt(text) >= 0) {
+              numericElements.push(element);
+            }
+          });
+          
+          console.log(`🔍 [Promotion] Found ${numericElements.length} numeric elements to check`);
+          
+          // Try to match and update based on context
+          numericElements.forEach(element => {
+            const parent = element.parentElement;
+            if (parent) {
+              const parentText = parent.textContent.toLowerCase();
+              const currentValue = element.textContent.trim();
+              
+              // Check for direct subordinates
+              if (parentText.includes('direct') || parentText.includes('register') || parentText.includes('deposit')) {
+                Object.entries(promotionData.direct).forEach(([key, value]) => {
+                  if (parentText.includes(key.toLowerCase())) {
+                    console.log(`✅ [Promotion] Force update direct: "${key}" from "${currentValue}" to "${value}"`);
+                    element.textContent = value;
+                    totalUpdated++;
+                  }
+                });
+              }
+              
+              // Check for team subordinates
+              if (parentText.includes('team') || parentText.includes('subordinate')) {
+                Object.entries(promotionData.team).forEach(([key, value]) => {
+                  if (parentText.includes(key.toLowerCase())) {
+                    console.log(`✅ [Promotion] Force update team: "${key}" from "${currentValue}" to "${value}"`);
+                    element.textContent = value;
+                    totalUpdated++;
+                  }
+                });
+              }
+            }
+          });
+          
+          return totalUpdated;
         }
         
         // -------------------------
@@ -832,15 +953,49 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             } else if (currentPage === 'Promotion') {
               console.log("🔄 [Monitor] Checking Promotion data...");
               
-              // Check if data needs updating (look for '0' values)
-              const needsUpdate = document.querySelector('.info_content .num') && 
-                                 Array.from(document.querySelectorAll('.info_content .num')).some(el => el.textContent.trim() === '0');
+              // Enhanced check for promotion data that needs updating
+              let needsUpdate = false;
+              
+              // Check for '0' values in various selectors
+              const checkSelectors = [
+                '.info_content .num',
+                '.info .num',
+                '[class*="num"]',
+                'div[class*="line"] div'
+              ];
+              
+              for (const selector of checkSelectors) {
+                const elements = document.querySelectorAll(selector);
+                if (elements.length > 0) {
+                  const hasZeroValues = Array.from(elements).some(el => {
+                    const text = el.textContent.trim();
+                    return text === '0' || (parseInt(text) < 10 && parseInt(text) >= 0);
+                  });
+                  
+                  if (hasZeroValues) {
+                    needsUpdate = true;
+                    console.log(`🔄 [Monitor] Found values needing update with selector: ${selector}`);
+                    break;
+                  }
+                }
+              }
+              
+              // Also check for commission data
+              const commissionElements = document.querySelectorAll('.commission span');
+              const hasCommissionZeros = Array.from(commissionElements).some(el => el.textContent.trim() === '0');
+              
+              if (hasCommissionZeros) {
+                needsUpdate = true;
+                console.log("🔄 [Monitor] Found commission values needing update");
+              }
               
               if (needsUpdate) {
                 console.log("🔄 [Monitor] Promotion data needs updating...");
                 updatePromotionData();
                 updateCommissionData();
                 lastUpdateTime = currentTime;
+              } else {
+                console.log("✅ [Monitor] Promotion data looks good, no update needed");
               }
             }
           }, 2000);
