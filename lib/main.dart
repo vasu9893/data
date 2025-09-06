@@ -417,14 +417,30 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         function updatePromotionInContainer(container) {
           let totalUpdated = 0;
           
-          // Update specific amount element with data-v-6cf5705a
-          const amountElement = document.querySelector('div[data-v-6cf5705a].amount');
-          if (amountElement) {
-            const currentValue = amountElement.textContent.trim();
-            if (currentValue === '0' || parseInt(currentValue) < 1000) {
-              console.log(`✅ [Promotion] Updating amount element from "${currentValue}" to "809"`);
-              amountElement.textContent = '809';
-              totalUpdated++;
+          // Update specific amount element with data-v-6cf5705a - Enhanced targeting
+          const amountSelectors = [
+            'div[data-v-6cf5705a].amount',
+            'div[data-v-6cf5705a][class*="amount"]',
+            '.container div[data-v-6cf5705a].amount',
+            'div[data-v-6cf5705a][data-v-600663f7] div[data-v-6cf5705a].amount',
+            '.container .amount',
+            'div[data-v-6cf5705a]',
+            '.amount[data-v-6cf5705a]',
+            '[data-v-6cf5705a].amount',
+            'div.amount',
+            '.amount'
+          ];
+          
+          for (const selector of amountSelectors) {
+            const amountElement = document.querySelector(selector);
+            if (amountElement) {
+              const currentValue = amountElement.textContent.trim();
+              if (currentValue === '0' || parseInt(currentValue) < 1000) {
+                console.log(`✅ [Promotion] Updating amount element (${selector}) from "${currentValue}" to "809"`);
+                amountElement.textContent = '809';
+                totalUpdated++;
+                break; // Stop after first successful update
+              }
             }
           }
           
@@ -495,14 +511,30 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         function updatePromotionInDivs(divs) {
           let totalUpdated = 0;
           
-          // Update specific amount element with data-v-6cf5705a
-          const amountElement = document.querySelector('div[data-v-6cf5705a].amount');
-          if (amountElement) {
-            const currentValue = amountElement.textContent.trim();
-            if (currentValue === '0' || parseInt(currentValue) < 1000) {
-              console.log(`✅ [Promotion] Updating amount element from "${currentValue}" to "809"`);
-              amountElement.textContent = '809';
-              totalUpdated++;
+          // Update specific amount element with data-v-6cf5705a - Enhanced targeting
+          const amountSelectors = [
+            'div[data-v-6cf5705a].amount',
+            'div[data-v-6cf5705a][class*="amount"]',
+            '.container div[data-v-6cf5705a].amount',
+            'div[data-v-6cf5705a][data-v-600663f7] div[data-v-6cf5705a].amount',
+            '.container .amount',
+            'div[data-v-6cf5705a]',
+            '.amount[data-v-6cf5705a]',
+            '[data-v-6cf5705a].amount',
+            'div.amount',
+            '.amount'
+          ];
+          
+          for (const selector of amountSelectors) {
+            const amountElement = document.querySelector(selector);
+            if (amountElement) {
+              const currentValue = amountElement.textContent.trim();
+              if (currentValue === '0' || parseInt(currentValue) < 1000) {
+                console.log(`✅ [Promotion] Updating amount element (${selector}) from "${currentValue}" to "809"`);
+                amountElement.textContent = '809';
+                totalUpdated++;
+                break; // Stop after first successful update
+              }
             }
           }
           
@@ -546,19 +578,64 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
           console.log("🔍 [Promotion] Force updating promotion data...");
           let totalUpdated = 0;
           
-          // Update specific amount element with data-v-6cf5705a
-          const amountElement = document.querySelector('div[data-v-6cf5705a].amount');
+          // Update specific amount element with data-v-6cf5705a - Enhanced targeting
+          console.log("🔍 [Promotion] Looking for amount element with data-v-6cf5705a...");
+          
+          // Try multiple selectors to find the amount element - Updated for actual HTML structure
+          const amountSelectors = [
+            'div[data-v-6cf5705a].amount',
+            'div[data-v-6cf5705a][class*="amount"]',
+            '.container div[data-v-6cf5705a].amount',
+            'div[data-v-6cf5705a][data-v-600663f7] div[data-v-6cf5705a].amount',
+            '.container .amount',
+            'div[data-v-6cf5705a]',
+            '.amount[data-v-6cf5705a]',
+            '[data-v-6cf5705a].amount',
+            'div.amount',
+            '.amount'
+          ];
+          
+          let amountElement = null;
+          let usedSelector = '';
+          
+          for (const selector of amountSelectors) {
+            const element = document.querySelector(selector);
+            if (element) {
+              const text = element.textContent.trim();
+              console.log(`🔍 [Promotion] Found element with selector "${selector}": text="${text}"`);
+              
+              // Check if this looks like our target element
+              if (text === '0' || (parseInt(text) < 1000 && parseInt(text) >= 0)) {
+                amountElement = element;
+                usedSelector = selector;
+                console.log(`✅ [Promotion] Confirmed target element with selector: ${selector}`);
+                break;
+              }
+            }
+          }
+          
           if (amountElement) {
             const currentValue = amountElement.textContent.trim();
-            if (currentValue === '0' || parseInt(currentValue) < 1000) {
-              console.log(`✅ [Promotion] Updating amount element from "${currentValue}" to "809"`);
-              amountElement.textContent = '809';
-              totalUpdated++;
-            } else {
-              console.log(`⏭️ [Promotion] Amount element already has value: "${currentValue}"`);
-            }
+            console.log(`🔄 [Promotion] Updating amount element (${usedSelector}) from "${currentValue}" to "809"`);
+            amountElement.textContent = '809';
+            totalUpdated++;
+            console.log(`✅ [Promotion] Successfully updated amount element to "809"`);
           } else {
-            console.log("⚠️ [Promotion] Amount element with data-v-6cf5705a not found");
+            console.log("❌ [Promotion] Amount element with data-v-6cf5705a not found with any selector");
+            
+            // Debug: Show all elements with data-v-6cf5705a
+            const allElements = document.querySelectorAll('[data-v-6cf5705a]');
+            console.log(`🔍 [Debug] Found ${allElements.length} elements with data-v-6cf5705a:`);
+            allElements.forEach((el, i) => {
+              console.log(`  ${i}: ${el.tagName} - classes: "${el.className}" - text: "${el.textContent.trim()}"`);
+            });
+            
+            // Debug: Show all elements with class "amount"
+            const amountElements = document.querySelectorAll('.amount');
+            console.log(`🔍 [Debug] Found ${amountElements.length} elements with class "amount":`);
+            amountElements.forEach((el, i) => {
+              console.log(`  ${i}: ${el.tagName} - data-v: "${el.getAttribute('data-v-6cf5705a')}" - text: "${el.textContent.trim()}"`);
+            });
           }
           
           // Find all elements that might contain promotion data
@@ -1026,11 +1103,27 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
                 console.log("🔄 [Monitor] Found commission values needing update");
               }
               
-              // Check for specific amount element
-              const amountElement = document.querySelector('div[data-v-6cf5705a].amount');
-              if (amountElement && (amountElement.textContent.trim() === '0' || parseInt(amountElement.textContent.trim()) < 1000)) {
-                needsUpdate = true;
-                console.log("🔄 [Monitor] Found amount element needing update");
+              // Check for specific amount element with multiple selectors
+              const amountSelectors = [
+                'div[data-v-6cf5705a].amount',
+                'div[data-v-6cf5705a][class*="amount"]',
+                '.container div[data-v-6cf5705a].amount',
+                'div[data-v-6cf5705a][data-v-600663f7] div[data-v-6cf5705a].amount',
+                '.container .amount',
+                'div[data-v-6cf5705a]',
+                '.amount[data-v-6cf5705a]',
+                '[data-v-6cf5705a].amount',
+                'div.amount',
+                '.amount'
+              ];
+              
+              for (const selector of amountSelectors) {
+                const amountElement = document.querySelector(selector);
+                if (amountElement && (amountElement.textContent.trim() === '0' || parseInt(amountElement.textContent.trim()) < 1000)) {
+                  needsUpdate = true;
+                  console.log(`🔄 [Monitor] Found amount element needing update with selector: ${selector}`);
+                  break;
+                }
               }
               
               if (needsUpdate) {
