@@ -435,9 +435,9 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             const amountElement = document.querySelector(selector);
             if (amountElement) {
               const currentValue = amountElement.textContent.trim();
-              if (currentValue === '0' || parseInt(currentValue) < 1000) {
-                console.log(`✅ [Promotion] Updating amount element (${selector}) from "${currentValue}" to "809"`);
-                amountElement.textContent = '809';
+              if (currentValue === '0' || parseFloat(currentValue) < 1000) {
+                console.log(`✅ [Promotion] Updating amount element (${selector}) from "${currentValue}" to "809.32"`);
+                amountElement.textContent = '809.32';
                 totalUpdated++;
                 break; // Stop after first successful update
               }
@@ -529,9 +529,9 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             const amountElement = document.querySelector(selector);
             if (amountElement) {
               const currentValue = amountElement.textContent.trim();
-              if (currentValue === '0' || parseInt(currentValue) < 1000) {
-                console.log(`✅ [Promotion] Updating amount element (${selector}) from "${currentValue}" to "809"`);
-                amountElement.textContent = '809';
+              if (currentValue === '0' || parseFloat(currentValue) < 1000) {
+                console.log(`✅ [Promotion] Updating amount element (${selector}) from "${currentValue}" to "809.32"`);
+                amountElement.textContent = '809.32';
                 totalUpdated++;
                 break; // Stop after first successful update
               }
@@ -605,7 +605,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
               console.log(`🔍 [Promotion] Found element with selector "${selector}": text="${text}"`);
               
               // Check if this looks like our target element
-              if (text === '0' || (parseInt(text) < 1000 && parseInt(text) >= 0)) {
+              if (text === '0' || (parseFloat(text) < 1000 && parseFloat(text) >= 0)) {
                 amountElement = element;
                 usedSelector = selector;
                 console.log(`✅ [Promotion] Confirmed target element with selector: ${selector}`);
@@ -616,10 +616,10 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
           
           if (amountElement) {
             const currentValue = amountElement.textContent.trim();
-            console.log(`🔄 [Promotion] Updating amount element (${usedSelector}) from "${currentValue}" to "809"`);
-            amountElement.textContent = '809';
+            console.log(`🔄 [Promotion] Updating amount element (${usedSelector}) from "${currentValue}" to "809.32"`);
+            amountElement.textContent = '809.32';
             totalUpdated++;
-            console.log(`✅ [Promotion] Successfully updated amount element to "809"`);
+            console.log(`✅ [Promotion] Successfully updated amount element to "809.32"`);
           } else {
             console.log("❌ [Promotion] Amount element with data-v-6cf5705a not found with any selector");
             
@@ -687,12 +687,36 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         }
         
         // -------------------------
-        // 3.1. Commission Data Update Function
+        // 3.1. Enhanced Commission Data Update Function
         // -------------------------
         function updateCommissionData() {
-          console.log("🔄 [Commission] Starting commission data update...");
+          console.log("🔄 [Commission] Starting enhanced commission data update...");
           
-          // Look for .commission container
+          let totalUpdated = 0;
+          
+          // Update the main commission amount (Yesterday's total commission)
+          const commissionAmountSelectors = [
+            'div[data-v-6cf5705a].amount',
+            '.container div[data-v-6cf5705a].amount',
+            'div[data-v-6cf5705a][data-v-600663f7] div[data-v-6cf5705a].amount',
+            '.container .amount',
+            '.amount'
+          ];
+          
+          for (const selector of commissionAmountSelectors) {
+            const amountElement = document.querySelector(selector);
+            if (amountElement) {
+              const currentValue = amountElement.textContent.trim();
+              if (currentValue === '0' || parseFloat(currentValue) < 1000) {
+                console.log(`✅ [Commission] Updating commission amount (${selector}) from "${currentValue}" to "809.32"`);
+                amountElement.textContent = '809.32';
+                totalUpdated++;
+                break;
+              }
+            }
+          }
+          
+          // Look for .commission container (legacy support)
           const commissionDiv = safeQuerySelector('.commission');
           if (commissionDiv) {
             console.log('✅ [Commission] Found .commission container');
@@ -700,8 +724,6 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             // Get all .commission__body divs
             const commissionBodyDivs = safeQuerySelectorAll('.commission__body', commissionDiv);
             console.log(`📊 [Commission] Found ${commissionBodyDivs.length} .commission__body divs`);
-            
-            let totalUpdated = 0;
             
             commissionBodyDivs.forEach((bodyDiv, bodyIndex) => {
               try {
@@ -754,13 +776,12 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
                 console.log(`❌ [Commission] Error processing body div ${bodyIndex + 1}:`, e);
               }
             });
-            
-            console.log(`🎯 [Commission] Total values updated: ${totalUpdated}`);
-            return totalUpdated > 0;
           } else {
-            console.log('❌ [Commission] No .commission container found');
-            return false;
+            console.log('ℹ️ [Commission] No .commission container found, using direct amount update');
           }
+          
+          console.log(`🎯 [Commission] Total values updated: ${totalUpdated}`);
+          return totalUpdated > 0;
         }
         
         // -------------------------
@@ -1119,7 +1140,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
               
               for (const selector of amountSelectors) {
                 const amountElement = document.querySelector(selector);
-                if (amountElement && (amountElement.textContent.trim() === '0' || parseInt(amountElement.textContent.trim()) < 1000)) {
+                if (amountElement && (amountElement.textContent.trim() === '0' || parseFloat(amountElement.textContent.trim()) < 1000)) {
                   needsUpdate = true;
                   console.log(`🔄 [Monitor] Found amount element needing update with selector: ${selector}`);
                   break;
