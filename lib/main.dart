@@ -95,7 +95,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         // Team Report date data mapping (2025-08-20 → 2025-09-05)
         const dateData = {
           "2025-09-05": {
-            "Deposit number": "78",
+            "Deposit number": "79",
             "Deposit amount": "56200",
             "Number of bettors": "95",
             "Total bet": "245000",
@@ -103,7 +103,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             "First deposit amount": "34200"
           },
           "2025-09-04": {
-            "Deposit number": "76",
+            "Deposit number": "71",
             "Deposit amount": "55500",
             "Number of bettors": "94",
             "Total bet": "242000",
@@ -119,7 +119,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             "First deposit amount": "33100"
           },
           "2025-09-02": {
-            "Deposit number": "75",
+            "Deposit number": "69",
             "Deposit amount": "54800",
             "Number of bettors": "92",
             "Total bet": "238000",
@@ -135,7 +135,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             "First deposit amount": "31000"
           },
           "2025-08-31": {
-            "Deposit number": "68",
+            "Deposit number": "64",
             "Deposit amount": "47890",
             "Number of bettors": "85",
             "Total bet": "210000",
@@ -143,7 +143,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             "First deposit amount": "28900"
           },
           "2025-08-30": {
-            "Deposit number": "65",
+            "Deposit number": "69",
             "Deposit amount": "45678",
             "Number of bettors": "82",
             "Total bet": "198765",
