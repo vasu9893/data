@@ -92,8 +92,32 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
           }
         };
         
-        // Team Report date data mapping (2025-08-20 → 2025-09-02)
+        // Team Report date data mapping (2025-08-20 → 2025-09-05)
         const dateData = {
+          "2025-09-05": {
+            "Deposit number": "78",
+            "Deposit amount": "56200",
+            "Number of bettors": "95",
+            "Total bet": "245000",
+            "Number of people making first deposit": "38",
+            "First deposit amount": "34200"
+          },
+          "2025-09-04": {
+            "Deposit number": "76",
+            "Deposit amount": "55500",
+            "Number of bettors": "94",
+            "Total bet": "242000",
+            "Number of people making first deposit": "37",
+            "First deposit amount": "33500"
+          },
+          "2025-09-03": {
+            "Deposit number": "77",
+            "Deposit amount": "55800",
+            "Number of bettors": "93",
+            "Total bet": "240000",
+            "Number of people making first deposit": "36",
+            "First deposit amount": "33100"
+          },
           "2025-09-02": {
             "Deposit number": "75",
             "Deposit amount": "54800",
