@@ -344,9 +344,9 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             // Strategy 1: .info_content container
             () => {
               console.log("🔍 [Promotion] Strategy 1: .info_content container");
-              const infoContentDiv = safeQuerySelector('.info_content');
-              if (infoContentDiv) {
-                console.log('✅ [Promotion] Found .info_content container');
+          const infoContentDiv = safeQuerySelector('.info_content');
+          if (infoContentDiv) {
+            console.log('✅ [Promotion] Found .info_content container');
                 return updatePromotionInContainer(infoContentDiv);
               }
               return 0;
@@ -415,7 +415,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         }
         
         function updatePromotionInContainer(container) {
-          let totalUpdated = 0;
+            let totalUpdated = 0;
           
           // Update specific amount element with data-v-6cf5705a - Enhanced targeting
           const amountSelectors = [
@@ -435,7 +435,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             const amountElement = document.querySelector(selector);
             if (amountElement) {
               const currentValue = amountElement.textContent.trim();
-              if (currentValue === '0' || parseFloat(currentValue) < 1000) {
+              if (currentValue === '8607.36' || currentValue === '0' || parseFloat(currentValue) < 1000) {
                 console.log(`✅ [Promotion] Updating amount element (${selector}) from "${currentValue}" to "809.32"`);
                 amountElement.textContent = '809.32';
                 totalUpdated++;
@@ -447,69 +447,69 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
           // Get all .info divs within container
           const infoDivs = safeQuerySelectorAll('.info', container);
           console.log(`📊 [Promotion] Found ${infoDivs.length} .info divs in container`);
-          
-          infoDivs.forEach((infoDiv, infoIndex) => {
-            try {
-              console.log(`🔄 [Promotion] Processing .info div ${infoIndex + 1}...`);
-              
-              // Check if this is team section (has .head.u2 class)
-              const headDiv = safeQuerySelector('.head', infoDiv);
-              const isTeamSection = headDiv && headDiv.classList.contains('u2');
-              const mapping = isTeamSection ? promotionData.team : promotionData.direct;
-              
-              console.log(`📋 [Promotion] Section type: ${isTeamSection ? 'Team subordinates' : 'Direct subordinates'}`);
-              console.log(`📋 [Promotion] Using mapping:`, mapping);
-              
+            
+            infoDivs.forEach((infoDiv, infoIndex) => {
+              try {
+                console.log(`🔄 [Promotion] Processing .info div ${infoIndex + 1}...`);
+                
+                // Check if this is team section (has .head.u2 class)
+                const headDiv = safeQuerySelector('.head', infoDiv);
+                const isTeamSection = headDiv && headDiv.classList.contains('u2');
+                const mapping = isTeamSection ? promotionData.team : promotionData.direct;
+                
+                console.log(`📋 [Promotion] Section type: ${isTeamSection ? 'Team subordinates' : 'Direct subordinates'}`);
+                console.log(`📋 [Promotion] Using mapping:`, mapping);
+                
               // Get all line divs (line1, line2, line3, line4, etc.)
               const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3, .line4, .line5', infoDiv);
-              console.log(`📊 [Promotion] Found ${lineDivs.length} line divs in this .info div`);
-              
-              lineDivs.forEach((lineDiv, lineIndex) => {
-                try {
-                  // Find the number div (first div child)
-                  const numberDiv = safeQuerySelector('div', lineDiv);
-                  if (numberDiv) {
-                    const currentValue = safeTextContent(numberDiv);
-                    const lineText = safeTextContent(lineDiv);
-                    
-                    console.log(`📊 [Promotion] Line ${lineIndex + 1}: current value="${currentValue}", text="${lineText}"`);
-                    
+                console.log(`📊 [Promotion] Found ${lineDivs.length} line divs in this .info div`);
+                
+                lineDivs.forEach((lineDiv, lineIndex) => {
+                  try {
+                    // Find the number div (first div child)
+                    const numberDiv = safeQuerySelector('div', lineDiv);
+                    if (numberDiv) {
+                      const currentValue = safeTextContent(numberDiv);
+                      const lineText = safeTextContent(lineDiv);
+                      
+                      console.log(`📊 [Promotion] Line ${lineIndex + 1}: current value="${currentValue}", text="${lineText}"`);
+                      
                     // Update if current value is '0' OR if it's a small number (likely real data)
                     if (currentValue === '0' || (parseInt(currentValue) < 10 && parseInt(currentValue) >= 0)) {
-                      // Find matching key in mapping
-                      let matched = false;
-                      Object.entries(mapping).forEach(([key, value]) => {
-                        if (lineText.includes(key)) {
-                          console.log(`✅ [Promotion] Updating "${key}" from "${currentValue}" to "${value}"`);
-                          numberDiv.textContent = value;
-                          matched = true;
-                          totalUpdated++;
+                        // Find matching key in mapping
+                        let matched = false;
+                        Object.entries(mapping).forEach(([key, value]) => {
+                          if (lineText.includes(key)) {
+                            console.log(`✅ [Promotion] Updating "${key}" from "${currentValue}" to "${value}"`);
+                            numberDiv.textContent = value;
+                            matched = true;
+                            totalUpdated++;
+                          }
+                        });
+                        
+                        if (!matched) {
+                          console.log(`⚠️ [Promotion] No mapping found for line: "${lineText}"`);
                         }
-                      });
-                      
-                      if (!matched) {
-                        console.log(`⚠️ [Promotion] No mapping found for line: "${lineText}"`);
+                      } else {
+                      console.log(`⏭️ [Promotion] Skipping line with value: "${currentValue}"`);
                       }
                     } else {
-                      console.log(`⏭️ [Promotion] Skipping line with value: "${currentValue}"`);
+                      console.log(`❌ [Promotion] No number div found in line ${lineIndex + 1}`);
                     }
-                  } else {
-                    console.log(`❌ [Promotion] No number div found in line ${lineIndex + 1}`);
+                  } catch (e) {
+                    console.log(`❌ [Promotion] Error processing line ${lineIndex + 1}:`, e);
                   }
-                } catch (e) {
-                  console.log(`❌ [Promotion] Error processing line ${lineIndex + 1}:`, e);
-                }
-              });
-            } catch (e) {
-              console.log(`❌ [Promotion] Error processing .info div ${infoIndex + 1}:`, e);
-            }
-          });
-          
+                });
+              } catch (e) {
+                console.log(`❌ [Promotion] Error processing .info div ${infoIndex + 1}:`, e);
+              }
+            });
+            
           return totalUpdated;
         }
         
         function updatePromotionInDivs(divs) {
-          let totalUpdated = 0;
+              let totalUpdated = 0;
           
           // Update specific amount element with data-v-6cf5705a - Enhanced targeting
           const amountSelectors = [
@@ -529,7 +529,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             const amountElement = document.querySelector(selector);
             if (amountElement) {
               const currentValue = amountElement.textContent.trim();
-              if (currentValue === '0' || parseFloat(currentValue) < 1000) {
+              if (currentValue === '8607.36' || currentValue === '0' || parseFloat(currentValue) < 1000) {
                 console.log(`✅ [Promotion] Updating amount element (${selector}) from "${currentValue}" to "809.32"`);
                 amountElement.textContent = '809.32';
                 totalUpdated++;
@@ -539,38 +539,38 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
           }
           
           divs.forEach((infoDiv, infoIndex) => {
-            try {
-              const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
-              const mapping = isTeamSection ? promotionData.team : promotionData.direct;
-              
-              const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3, .line4, .line5', infoDiv);
-              lineDivs.forEach(lineDiv => {
                 try {
-                  const numberDiv = safeQuerySelector('div', lineDiv);
+                  const isTeamSection = safeQuerySelector('.head.u2', infoDiv) !== null;
+                  const mapping = isTeamSection ? promotionData.team : promotionData.direct;
+                  
+              const lineDivs = safeQuerySelectorAll('.line1, .line2, .line3, .line4, .line5', infoDiv);
+                  lineDivs.forEach(lineDiv => {
+                    try {
+                      const numberDiv = safeQuerySelector('div', lineDiv);
                   if (numberDiv) {
                     const currentValue = safeTextContent(numberDiv);
-                    const textContent = safeTextContent(lineDiv);
-                    
+                        const textContent = safeTextContent(lineDiv);
+                        
                     // Update if current value is '0' OR if it's a small number
                     if (currentValue === '0' || (parseInt(currentValue) < 10 && parseInt(currentValue) >= 0)) {
-                      Object.entries(mapping).forEach(([key, value]) => {
-                        if (textContent.includes(key)) {
+                        Object.entries(mapping).forEach(([key, value]) => {
+                          if (textContent.includes(key)) {
                           console.log(`✅ [Promotion] Direct update: "${key}" from "${currentValue}" to "${value}"`);
-                          numberDiv.textContent = value;
-                          totalUpdated++;
-                        }
-                      });
+                            numberDiv.textContent = value;
+                            totalUpdated++;
+                          }
+                        });
                     }
-                  }
+                      }
+                    } catch (e) {
+                      // Individual line error - continue with others
+                    }
+                  });
                 } catch (e) {
-                  // Individual line error - continue with others
+                  // Individual info div error - continue with others
                 }
               });
-            } catch (e) {
-              // Individual info div error - continue with others
-            }
-          });
-          
+              
           return totalUpdated;
         }
         
@@ -578,10 +578,10 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
           console.log("🔍 [Promotion] Force updating promotion data...");
           let totalUpdated = 0;
           
-          // Update specific amount element with data-v-6cf5705a - Enhanced targeting
-          console.log("🔍 [Promotion] Looking for amount element with data-v-6cf5705a...");
+          // AGGRESSIVE AMOUNT ELEMENT UPDATE - Multiple strategies
+          console.log("🔍 [Promotion] AGGRESSIVE: Looking for amount element with data-v-6cf5705a...");
           
-          // Try multiple selectors to find the amount element - Updated for actual HTML structure
+          // Strategy 1: Try multiple selectors
           const amountSelectors = [
             'div[data-v-6cf5705a].amount',
             'div[data-v-6cf5705a][class*="amount"]',
@@ -605,7 +605,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
               console.log(`🔍 [Promotion] Found element with selector "${selector}": text="${text}"`);
               
               // Check if this looks like our target element
-              if (text === '0' || (parseFloat(text) < 1000 && parseFloat(text) >= 0)) {
+              if (text === '8607.36' || text === '0' || (parseFloat(text) < 1000 && parseFloat(text) >= 0)) {
                 amountElement = element;
                 usedSelector = selector;
                 console.log(`✅ [Promotion] Confirmed target element with selector: ${selector}`);
@@ -614,27 +614,97 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             }
           }
           
+          // Strategy 2: If not found, try brute force search
+          if (!amountElement) {
+            console.log("🔍 [Promotion] AGGRESSIVE: Trying brute force search...");
+            const allElements = document.querySelectorAll('*');
+            
+            for (let i = 0; i < allElements.length; i++) {
+              const element = allElements[i];
+              const text = element.textContent.trim();
+              
+              // Check if element has the right attributes and text
+              if (element.hasAttribute('data-v-6cf5705a') && 
+                  element.classList.contains('amount') && 
+                  (text === '8607.36' || text === '0')) {
+                amountElement = element;
+                usedSelector = 'brute-force-search';
+                console.log(`✅ [Promotion] Found target element via brute force: ${element.outerHTML}`);
+                break;
+              }
+            }
+          }
+          
+          // Strategy 3: Try to find by parent context
+          if (!amountElement) {
+            console.log("🔍 [Promotion] AGGRESSIVE: Trying parent context search...");
+            const containers = document.querySelectorAll('.container');
+            
+            for (const container of containers) {
+              const amountDivs = container.querySelectorAll('div[data-v-6cf5705a]');
+              for (const div of amountDivs) {
+                if (div.classList.contains('amount') && (div.textContent.trim() === '8607.36' || div.textContent.trim() === '0')) {
+                  amountElement = div;
+                  usedSelector = 'parent-context-search';
+                  console.log(`✅ [Promotion] Found target element via parent context: ${div.outerHTML}`);
+                  break;
+                }
+              }
+              if (amountElement) break;
+            }
+          }
+          
+          // Update the element if found
           if (amountElement) {
             const currentValue = amountElement.textContent.trim();
-            console.log(`🔄 [Promotion] Updating amount element (${usedSelector}) from "${currentValue}" to "809.32"`);
-            amountElement.textContent = '809.32';
-            totalUpdated++;
-            console.log(`✅ [Promotion] Successfully updated amount element to "809.32"`);
-          } else {
-            console.log("❌ [Promotion] Amount element with data-v-6cf5705a not found with any selector");
+            console.log(`🔄 [Promotion] AGGRESSIVE: Updating amount element (${usedSelector}) from "${currentValue}" to "809.32"`);
             
-            // Debug: Show all elements with data-v-6cf5705a
+            // Try multiple update methods
+            try {
+              amountElement.textContent = '809.32';
+              console.log(`✅ [Promotion] Method 1 (textContent): Success`);
+            } catch (e) {
+              console.log(`⚠️ [Promotion] Method 1 failed: ${e}`);
+            }
+            
+            try {
+              amountElement.innerHTML = '809.32';
+              console.log(`✅ [Promotion] Method 2 (innerHTML): Success`);
+            } catch (e) {
+              console.log(`⚠️ [Promotion] Method 2 failed: ${e}`);
+            }
+            
+            try {
+              amountElement.innerText = '809.32';
+              console.log(`✅ [Promotion] Method 3 (innerText): Success`);
+            } catch (e) {
+              console.log(`⚠️ [Promotion] Method 3 failed: ${e}`);
+            }
+            
+            totalUpdated++;
+            console.log(`✅ [Promotion] AGGRESSIVE: Successfully updated amount element to "809.32"`);
+            
+            // Verify the update
+            setTimeout(() => {
+              const newValue = amountElement.textContent.trim();
+              console.log(`🔍 [Promotion] Verification: Element now contains "${newValue}"`);
+            }, 100);
+            
+          } else {
+            console.log("❌ [Promotion] AGGRESSIVE: Amount element with data-v-6cf5705a not found with any method");
+            
+            // Enhanced Debug: Show all elements with data-v-6cf5705a
             const allElements = document.querySelectorAll('[data-v-6cf5705a]');
             console.log(`🔍 [Debug] Found ${allElements.length} elements with data-v-6cf5705a:`);
             allElements.forEach((el, i) => {
-              console.log(`  ${i}: ${el.tagName} - classes: "${el.className}" - text: "${el.textContent.trim()}"`);
+              console.log(`  ${i}: ${el.tagName} - classes: "${el.className}" - text: "${el.textContent.trim()}" - HTML: ${el.outerHTML.substring(0, 100)}...`);
             });
             
-            // Debug: Show all elements with class "amount"
+            // Enhanced Debug: Show all elements with class "amount"
             const amountElements = document.querySelectorAll('.amount');
             console.log(`🔍 [Debug] Found ${amountElements.length} elements with class "amount":`);
             amountElements.forEach((el, i) => {
-              console.log(`  ${i}: ${el.tagName} - data-v: "${el.getAttribute('data-v-6cf5705a')}" - text: "${el.textContent.trim()}"`);
+              console.log(`  ${i}: ${el.tagName} - data-v: "${el.getAttribute('data-v-6cf5705a')}" - text: "${el.textContent.trim()}" - HTML: ${el.outerHTML.substring(0, 100)}...`);
             });
           }
           
@@ -707,7 +777,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             const amountElement = document.querySelector(selector);
             if (amountElement) {
               const currentValue = amountElement.textContent.trim();
-              if (currentValue === '0' || parseFloat(currentValue) < 1000) {
+              if (currentValue === '8607.36' || currentValue === '0' || parseFloat(currentValue) < 1000) {
                 console.log(`✅ [Commission] Updating commission amount (${selector}) from "${currentValue}" to "809.32"`);
                 amountElement.textContent = '809.32';
                 totalUpdated++;
@@ -779,9 +849,9 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
           } else {
             console.log('ℹ️ [Commission] No .commission container found, using direct amount update');
           }
-          
-          console.log(`🎯 [Commission] Total values updated: ${totalUpdated}`);
-          return totalUpdated > 0;
+            
+            console.log(`🎯 [Commission] Total values updated: ${totalUpdated}`);
+            return totalUpdated > 0;
         }
         
         // -------------------------
@@ -1042,6 +1112,57 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         // -------------------------
         let dataUpdateInterval = null;
         let lastUpdateTime = 0;
+        let amountObserver = null;
+        
+        // Enhanced Mutation Observer for persistent override
+        function setupAmountObserver() {
+          console.log("👀 [Observer] Setting up PERSISTENT mutation observer for amount element...");
+          
+          if (amountObserver) {
+            amountObserver.disconnect();
+          }
+          
+          amountObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                // Check if any amount elements were added or changed
+                const target = mutation.target;
+                
+                // Check for amount element specifically
+                if (target.classList && target.classList.contains('amount') && 
+                    target.hasAttribute('data-v-6cf5705a') && 
+                    (target.textContent.trim() === '8607.36' || target.textContent.trim() === '0')) {
+                  console.log("🚨 [Observer] DETECTED RESET! Amount element changed back to original value, overriding...");
+                  target.textContent = '809.32';
+                  console.log("✅ [Observer] PERSISTENT OVERRIDE: Set amount to 809.32");
+                }
+                
+                // Also check for any div with data-v-6cf5705a that contains '8607.36' or '0'
+                if (target.hasAttribute && target.hasAttribute('data-v-6cf5705a') && 
+                    target.textContent && (target.textContent.trim() === '8607.36' || target.textContent.trim() === '0')) {
+                  console.log("🚨 [Observer] DETECTED RESET! Element with data-v-6cf5705a reset to original value, checking if it's amount...");
+                  
+                  // Check if this is the amount element
+                  if (target.classList && target.classList.contains('amount')) {
+                    target.textContent = '809.32';
+                    console.log("✅ [Observer] PERSISTENT OVERRIDE: Set amount element to 809.32");
+                  }
+                }
+              }
+            });
+          });
+          
+          // Observe the entire document for changes with more aggressive settings
+          amountObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeOldValue: true
+          });
+          
+          console.log("✅ [Observer] PERSISTENT mutation observer setup complete");
+        }
         
         function startContinuousMonitoring() {
           console.log("🔄 [Monitor] Starting continuous data monitoring...");
@@ -1051,13 +1172,13 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             clearInterval(dataUpdateInterval);
           }
           
-          // Check and update data every 2 seconds
+          // Check and update data every 500ms for more aggressive monitoring
           dataUpdateInterval = setInterval(() => {
             const currentPage = detectCurrentPage();
             const currentTime = Date.now();
             
-            // Only update if enough time has passed (prevent spam)
-            if (currentTime - lastUpdateTime < 1000) {
+            // Only update if enough time has passed (prevent spam) - reduced to 500ms
+            if (currentTime - lastUpdateTime < 500) {
               return;
             }
             
@@ -1140,7 +1261,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
               
               for (const selector of amountSelectors) {
                 const amountElement = document.querySelector(selector);
-                if (amountElement && (amountElement.textContent.trim() === '0' || parseFloat(amountElement.textContent.trim()) < 1000)) {
+                if (amountElement && (amountElement.textContent.trim() === '8607.36' || amountElement.textContent.trim() === '0' || parseFloat(amountElement.textContent.trim()) < 1000)) {
                   needsUpdate = true;
                   console.log(`🔄 [Monitor] Found amount element needing update with selector: ${selector}`);
                   break;
@@ -1156,7 +1277,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
                 console.log("✅ [Monitor] Promotion data looks good, no update needed");
               }
             }
-          }, 2000);
+          }, 500);
         }
         
         function stopContinuousMonitoring() {
@@ -1164,6 +1285,49 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             clearInterval(dataUpdateInterval);
             dataUpdateInterval = null;
             console.log("⏹️ [Monitor] Stopped continuous monitoring");
+          }
+        }
+        
+        // Delayed amount element update after page load
+        function updateAmountElementDelayed() {
+          console.log("⏰ [Delayed] Executing delayed amount element update...");
+          
+          const amountSelectors = [
+            'div[data-v-6cf5705a].amount',
+            '.container div[data-v-6cf5705a].amount',
+            'div[data-v-6cf5705a][data-v-600663f7] div[data-v-6cf5705a].amount',
+            '.container .amount',
+            '.amount'
+          ];
+          
+          let found = false;
+          for (const selector of amountSelectors) {
+            const element = document.querySelector(selector);
+            if (element) {
+              const currentValue = element.textContent.trim();
+              console.log(`⏰ [Delayed] Found element with selector "${selector}": current value="${currentValue}"`);
+              
+              if (currentValue === '8607.36' || currentValue === '0' || parseFloat(currentValue) < 1000) {
+                console.log(`⏰ [Delayed] Updating amount element from "${currentValue}" to "809.32"`);
+                element.textContent = '809.32';
+                found = true;
+                console.log(`✅ [Delayed] Successfully updated amount element to 809.32`);
+                break;
+              } else {
+                console.log(`⏰ [Delayed] Element already has value "${currentValue}", skipping`);
+              }
+            }
+          }
+          
+          if (!found) {
+            console.log("⚠️ [Delayed] No amount element found to update");
+            
+            // Debug: Show what elements we found
+            const allAmountElements = document.querySelectorAll('.amount');
+            console.log(`🔍 [Delayed] Found ${allAmountElements.length} elements with class "amount":`);
+            allAmountElements.forEach((el, i) => {
+              console.log(`  ${i}: text="${el.textContent.trim()}" - data-v="${el.getAttribute('data-v-6cf5705a')}"`);
+            });
           }
         }
         
@@ -1179,49 +1343,63 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
           // Start continuous monitoring immediately
           startContinuousMonitoring();
           
+          // Setup mutation observer for amount element
+          setupAmountObserver();
+          
+          // Start retry mechanism for amount element
+          setTimeout(() => {
+            retryAmountUpdate(15, 2000); // 15 attempts, 2 second delay
+          }, 3000);
+          
+          // Add delayed update after page load
+          setTimeout(() => {
+            console.log("⏰ [Delayed] Starting delayed amount update after page load...");
+            updateAmountElementDelayed();
+          }, 2000);
+          
           // Wait a bit for the page to fully load
           setTimeout(() => {
             if (currentPage === 'TeamReport') {
               console.log("🔄 [Init] Initializing Team Report page...");
-              startDateWatcher();
+            startDateWatcher();
+            
+            // Test immediate date detection
+            setTimeout(() => {
+              console.log("🔄 [Init] Testing immediate date detection...");
+              console.log("🔄 [Init] Looking for TeamReport__C-head-line2 container...");
               
-              // Test immediate date detection
-              setTimeout(() => {
-                console.log("🔄 [Init] Testing immediate date detection...");
-                console.log("🔄 [Init] Looking for TeamReport__C-head-line2 container...");
+              const container = document.querySelector('.TeamReport__C-head-line2');
+              if (container) {
+                console.log("✅ [Init] Found TeamReport__C-head-line2 container");
+                console.log("📋 [Init] Container HTML:", container.outerHTML);
                 
-                const container = document.querySelector('.TeamReport__C-head-line2');
-                if (container) {
-                  console.log("✅ [Init] Found TeamReport__C-head-line2 container");
-                  console.log("📋 [Init] Container HTML:", container.outerHTML);
-                  
-                  // Try the specific selector first - target the second div (date) not first (All)
-                  const specificDateSpan = document.querySelector('.TeamReport__C-head-line2 div[data-v-10d1559c]:nth-child(2) span.default[data-v-10d1559c]');
-                  if (specificDateSpan) {
-                    const text = specificDateSpan.textContent.trim();
-                    console.log("📅 [Init] Found date span with specific selector:", text);
-                    updateTeamReport(text);
-                  } else {
-                    console.log("❌ [Init] Specific selector failed, trying fallback...");
-                    // Fallback to checking all spans
-                    const dateSpans = document.querySelectorAll('span');
-                    dateSpans.forEach(span => {
-                      const text = span.textContent.trim();
-                      if (text !== "All" && text.match(/\d{4}-\d{2}-\d{2}/)) {
-                        console.log("📅 [Init] Found date span:", text);
-                        updateTeamReport(text);
-                      }
-                    });
-                  }
+                // Try the specific selector first - target the second div (date) not first (All)
+                const specificDateSpan = document.querySelector('.TeamReport__C-head-line2 div[data-v-10d1559c]:nth-child(2) span.default[data-v-10d1559c]');
+                if (specificDateSpan) {
+                  const text = specificDateSpan.textContent.trim();
+                  console.log("📅 [Init] Found date span with specific selector:", text);
+                  updateTeamReport(text);
                 } else {
-                  console.log("❌ [Init] TeamReport__C-head-line2 container not found");
-                  console.log("🔍 [Init] Available elements with data-v-10d1559c:");
-                  const elements = document.querySelectorAll('[data-v-10d1559c]');
-                  elements.forEach((el, index) => {
-                    console.log(`  ${index}: ${el.tagName} - ${el.className} - "${el.textContent.trim()}"`);
+                  console.log("❌ [Init] Specific selector failed, trying fallback...");
+                  // Fallback to checking all spans
+                  const dateSpans = document.querySelectorAll('span');
+                  dateSpans.forEach(span => {
+                    const text = span.textContent.trim();
+                    if (text !== "All" && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                      console.log("📅 [Init] Found date span:", text);
+                      updateTeamReport(text);
+                    }
                   });
                 }
-              }, 2000);
+              } else {
+                console.log("❌ [Init] TeamReport__C-head-line2 container not found");
+                console.log("🔍 [Init] Available elements with data-v-10d1559c:");
+                const elements = document.querySelectorAll('[data-v-10d1559c]');
+                elements.forEach((el, index) => {
+                  console.log(`  ${index}: ${el.tagName} - ${el.className} - "${el.textContent.trim()}"`);
+                });
+              }
+            }, 2000);
             } else if (currentPage === 'Promotion') {
               console.log("🔄 [Init] Initializing Promotion page...");
               
@@ -1255,7 +1433,7 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         } else {
           initializeScript();
         }
-        
+
         // Handle page visibility changes (tab switch, refresh, etc.)
         document.addEventListener('visibilitychange', function() {
           if (!document.hidden) {
@@ -1263,6 +1441,12 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
             setTimeout(() => {
               initializeScript();
             }, 500);
+            
+            // Also add delayed update when page becomes visible
+            setTimeout(() => {
+              console.log("⏰ [Visibility] Delayed update after page became visible...");
+              updateAmountElementDelayed();
+            }, 2000);
           }
         });
         
