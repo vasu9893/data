@@ -782,57 +782,133 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         }
 
         // -------------------------
-        // 5. Start Monitoring with Retry Logic
+        // 5. Continuous Data Monitoring and Persistence
+        // -------------------------
+        let dataUpdateInterval = null;
+        let lastUpdateTime = 0;
+        
+        function startContinuousMonitoring() {
+          console.log("🔄 [Monitor] Starting continuous data monitoring...");
+          
+          // Clear any existing interval
+          if (dataUpdateInterval) {
+            clearInterval(dataUpdateInterval);
+          }
+          
+          // Check and update data every 2 seconds
+          dataUpdateInterval = setInterval(() => {
+            const currentPage = detectCurrentPage();
+            const currentTime = Date.now();
+            
+            // Only update if enough time has passed (prevent spam)
+            if (currentTime - lastUpdateTime < 1000) {
+              return;
+            }
+            
+            if (currentPage === 'TeamReport') {
+              console.log("🔄 [Monitor] Checking Team Report data...");
+              
+              // Find current date and update data
+              const dateSelectors = [
+                '.TeamReport__C-head-line2 div[data-v-10d1559c]:nth-child(2) span.default[data-v-10d1559c]',
+                '.TeamReport__C-head-line2 span.default[data-v-10d1559c]:nth-child(2)',
+                'div[data-v-10d1559c] span.default[data-v-10d1559c]',
+                'span.default[data-v-10d1559c]',
+                'span.default'
+              ];
+              
+              for (const selector of dateSelectors) {
+                const dateSpan = document.querySelector(selector);
+                if (dateSpan && dateSpan.textContent.trim()) {
+                  const text = dateSpan.textContent.trim();
+                  if (text !== "All" && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                    console.log("🔄 [Monitor] Updating Team Report data for date:", text);
+                    updateTeamReport(text);
+                    lastUpdateTime = currentTime;
+                    break;
+                  }
+                }
+              }
+            } else if (currentPage === 'Promotion') {
+              console.log("🔄 [Monitor] Checking Promotion data...");
+              
+              // Check if data needs updating (look for '0' values)
+              const needsUpdate = document.querySelector('.info_content .num') && 
+                                 Array.from(document.querySelectorAll('.info_content .num')).some(el => el.textContent.trim() === '0');
+              
+              if (needsUpdate) {
+                console.log("🔄 [Monitor] Promotion data needs updating...");
+                updatePromotionData();
+                updateCommissionData();
+                lastUpdateTime = currentTime;
+              }
+            }
+          }, 2000);
+        }
+        
+        function stopContinuousMonitoring() {
+          if (dataUpdateInterval) {
+            clearInterval(dataUpdateInterval);
+            dataUpdateInterval = null;
+            console.log("⏹️ [Monitor] Stopped continuous monitoring");
+          }
+        }
+        
+        // -------------------------
+        // 6. Enhanced Initialization with Persistence
         // -------------------------
         function initializeScript() {
-          console.log("🚀 [Init] Initializing script...");
+          console.log("🚀 [Init] Initializing script with persistence...");
           
           // Detect current page type
           const currentPage = detectCurrentPage();
+          
+          // Start continuous monitoring immediately
+          startContinuousMonitoring();
           
           // Wait a bit for the page to fully load
           setTimeout(() => {
             if (currentPage === 'TeamReport') {
               console.log("🔄 [Init] Initializing Team Report page...");
-            startDateWatcher();
-            
-            // Test immediate date detection
-            setTimeout(() => {
-              console.log("🔄 [Init] Testing immediate date detection...");
-              console.log("🔄 [Init] Looking for TeamReport__C-head-line2 container...");
+              startDateWatcher();
               
-              const container = document.querySelector('.TeamReport__C-head-line2');
-              if (container) {
-                console.log("✅ [Init] Found TeamReport__C-head-line2 container");
-                console.log("📋 [Init] Container HTML:", container.outerHTML);
+              // Test immediate date detection
+              setTimeout(() => {
+                console.log("🔄 [Init] Testing immediate date detection...");
+                console.log("🔄 [Init] Looking for TeamReport__C-head-line2 container...");
                 
-                // Try the specific selector first - target the second div (date) not first (All)
-                const specificDateSpan = document.querySelector('.TeamReport__C-head-line2 div[data-v-10d1559c]:nth-child(2) span.default[data-v-10d1559c]');
-                if (specificDateSpan) {
-                  const text = specificDateSpan.textContent.trim();
-                  console.log("📅 [Init] Found date span with specific selector:", text);
-                  updateTeamReport(text);
+                const container = document.querySelector('.TeamReport__C-head-line2');
+                if (container) {
+                  console.log("✅ [Init] Found TeamReport__C-head-line2 container");
+                  console.log("📋 [Init] Container HTML:", container.outerHTML);
+                  
+                  // Try the specific selector first - target the second div (date) not first (All)
+                  const specificDateSpan = document.querySelector('.TeamReport__C-head-line2 div[data-v-10d1559c]:nth-child(2) span.default[data-v-10d1559c]');
+                  if (specificDateSpan) {
+                    const text = specificDateSpan.textContent.trim();
+                    console.log("📅 [Init] Found date span with specific selector:", text);
+                    updateTeamReport(text);
+                  } else {
+                    console.log("❌ [Init] Specific selector failed, trying fallback...");
+                    // Fallback to checking all spans
+                    const dateSpans = document.querySelectorAll('span');
+                    dateSpans.forEach(span => {
+                      const text = span.textContent.trim();
+                      if (text !== "All" && text.match(/\d{4}-\d{2}-\d{2}/)) {
+                        console.log("📅 [Init] Found date span:", text);
+                        updateTeamReport(text);
+                      }
+                    });
+                  }
                 } else {
-                  console.log("❌ [Init] Specific selector failed, trying fallback...");
-                  // Fallback to checking all spans
-                  const dateSpans = document.querySelectorAll('span');
-                  dateSpans.forEach(span => {
-                    const text = span.textContent.trim();
-                    if (text !== "All" && text.match(/\d{4}-\d{2}-\d{2}/)) {
-                      console.log("📅 [Init] Found date span:", text);
-                      updateTeamReport(text);
-                    }
+                  console.log("❌ [Init] TeamReport__C-head-line2 container not found");
+                  console.log("🔍 [Init] Available elements with data-v-10d1559c:");
+                  const elements = document.querySelectorAll('[data-v-10d1559c]');
+                  elements.forEach((el, index) => {
+                    console.log(`  ${index}: ${el.tagName} - ${el.className} - "${el.textContent.trim()}"`);
                   });
                 }
-              } else {
-                console.log("❌ [Init] TeamReport__C-head-line2 container not found");
-                console.log("🔍 [Init] Available elements with data-v-10d1559c:");
-                const elements = document.querySelectorAll('[data-v-10d1559c]');
-                elements.forEach((el, index) => {
-                  console.log(`  ${index}: ${el.tagName} - ${el.className} - "${el.textContent.trim()}"`);
-                });
-              }
-            }, 2000);
+              }, 2000);
             } else if (currentPage === 'Promotion') {
               console.log("🔄 [Init] Initializing Promotion page...");
               
@@ -866,8 +942,34 @@ class _TeamReportWebViewState extends State<TeamReportWebView> {
         } else {
           initializeScript();
         }
+        
+        // Handle page visibility changes (tab switch, refresh, etc.)
+        document.addEventListener('visibilitychange', function() {
+          if (!document.hidden) {
+            console.log("👁️ [Visibility] Page became visible, re-initializing...");
+            setTimeout(() => {
+              initializeScript();
+            }, 500);
+          }
+        });
+        
+        // Handle page focus (when user comes back to tab)
+        window.addEventListener('focus', function() {
+          console.log("🎯 [Focus] Window focused, checking data...");
+          setTimeout(() => {
+            const currentPage = detectCurrentPage();
+            if (currentPage === 'TeamReport' || currentPage === 'Promotion') {
+              startContinuousMonitoring();
+            }
+          }, 500);
+        });
+        
+        // Handle beforeunload to clean up
+        window.addEventListener('beforeunload', function() {
+          stopContinuousMonitoring();
+        });
 
-        console.log("✅ [Injector] Script setup complete");
+        console.log("✅ [Injector] Script setup complete with persistence");
       })();
     """;
 
